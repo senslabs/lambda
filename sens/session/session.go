@@ -9,3 +9,6 @@ func GetUserSleep(w http.ResponseWriter, r *http.Request) {
 func ListUserSleeps(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("ListUserSleeps"))
 }
+
+func main() {
+}
