@@ -1,0 +1,3 @@
+FILE=https://github.com/senslabs/lambda/blob/master/sens/session/session.go
+fission function create --name get-user-sleep --env go-sens --src $FILE --entrypoint GetUserSleep
+fission function create --name list-user-sleeps --env go-sens --src $FILE --entrypoint ListUserSleeps
