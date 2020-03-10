@@ -1,0 +1,26 @@
+{
+    "list-users": {
+        "src": "",
+        "entry": "ListUsers"
+    },
+    "get-user": {
+        "src": "",
+        "entry": "GetUser"
+    },
+    "get-user-settings": {
+        "src": "",
+        "entry": "GetUserSettings"
+    },
+    "list-user-sessions": {
+        "src": "",
+        "entry": "ListUserSessions"
+    },
+    "get-user-session": {
+        "src": "",
+        "entry": "GetUserSession"
+    },
+    "get-session-properties": {
+        "src": "",
+        "entry": "GetSessionProperties"
+    }
+}
