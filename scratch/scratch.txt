@@ -4,3 +4,5 @@ fission function create --name list-user-sleeps --env go-sens --src $FILE --entr
 
 
 docker run --rm -p 8080:80 -v /code:/code wernight/codiad
+
+http://139.59.30.44:8080/
