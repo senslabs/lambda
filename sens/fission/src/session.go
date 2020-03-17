@@ -321,45 +321,60 @@ func getUserList(r *http.Request) []string {
 	return userIdList
 }
 
-//func GetParameterWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
-//	urlQueryParams := r.URL.Query()
-//	sessionId := urlQueryParams.Get("id")
-//
-//	sessionData := getSessionData(sessionId)
-//
-//	sessionStartTime := sessionData.StartTime
-//	sessionEndTime := sessionData.EndTime
-//
-//
-//}
+// func GetParameterWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
+// 	urlQueryParams := r.URL.Query()
+// 	sessionId := urlQueryParams.Get("id")
 
-//func GetCategoryWiseAdvancedSessionData() {
-//	categoriesData := map[string]map[string]TimeSeriesData{
-//		"Stress" : map[string]TimeSeriesData {
-//			"Vlf":   make(TimeSeriesData, 0),
-//			"Hf":    make(TimeSeriesData, 0),
-//			"Rmssd": make(TimeSeriesData, 0),
-//			"Pnn50": make(TimeSeriesData, 0),
-//		},
-//		"OriginalStress" : map[string]TimeseriesData {
-//			"Stress": make(TimeSeriesData, 0)
-//		},
-//		"SlepeData": map[string]TimeseriesData {
-//			""
-//		}
-//	}
-//	requiredStressData := map[string]interface{
-//		"Vlf":   make(TimeSeriesData, 0),
-//		"Hf":    make(TimeSeriesData, 0),
-//		"Rmssd": make(TimeSeriesData, 0),
-//		"Pnn50": make(TimeSeriesData, 0),
-//	}
-//}
-//
-//func fetchAdvancedSessionData() {
-//
-//}
+// 	sessionData := getSessionData(sessionId)
 
+// 	sessionStartTime := sessionData.StartTime
+// 	sessionEndTime := sessionData.EndTime
+// }
+
+// func GetCategoryWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
+// 	categoriesData := map[string]interface{}{
+// 		"Stress" : map[string]TimeSeriesData {
+// 			"Vlf":   make(TimeSeriesData, 0),
+// 			"Hf":    make(TimeSeriesData, 0),
+// 			"Rmssd": make(TimeSeriesData, 0),
+// 			"Pnn50": make(TimeSeriesData, 0),
+// 		},
+// 		"OriginalStress" : map[string]interface{} {
+// 			"Stress": make(TimeSeriesData, 0),
+// 		},
+// 		"Sleep": map[string]interface{} {
+// 			"Stages": make(TimeSeriesData, 0),
+// 		},
+// 		"Heart": map[string]interface{} {
+// 			"JjPeaks": make(TimeSeriesData,0),
+// 			"HeartRate": make(TimeSeriesData, 0),
+// 			"HRV Pack": map[string]interface{} {
+// 				"Sdnn": make(TimeSeriesData, 0),
+// 				"Rmssd": make(TimeSeriesData, 0),
+// 				"Pnn50": make(TimeSeriesData, 0),
+// 				"Vlf":   make(TimeSeriesData, 0),
+// 				"Hf":    make(TimeSeriesData, 0),
+// 			},
+// 		},
+// 		"Respiration" : map[string]interface{} {
+// 			"ZeroCrossing" : make(TimeSeriesData, 0),
+// 			"Snoring": make(TimeSeriesData, 0),
+// 			"Apnea": make(TimeSeriesData, 0),
+// 		},
+// 	}
+
+// 	requestedKey := r.URL.Query().Get("dataKey")
+
+// 	if value, ok := categoriesData[requestedKey]; ok {
+// 		log.Println(value)
+// 		log.Println(reflect.TypeOf(value))
+
+// 	}
+
+// }
+
+// func fetchAdvancedSessionData() {
+// }
 
 func getSessionData(sessionId string) Session {
 	sessionUrl := fmt.Sprintf("http://35.225.36.244:9804/api/sessions/get/%v", sessionId)
@@ -434,8 +449,7 @@ func getFromDataStore(URL string) []byte {
 	return responseBody
 }
 
-
-func GetUserSleep(w http.ResponseWriter, r *http.Request) {
+func GetSession(w http.ResponseWriter, r *http.Request) {
 	// Get the sessionId from the request body
 	// Fetch session details using the datastore link and type as sleep
 	// Using the Start Time and End Time, fetch the following
@@ -445,7 +459,7 @@ func GetUserSleep(w http.ResponseWriter, r *http.Request) {
 	// Create Sleep Map Data
 	// Return Sleep Map Data through Response
 	urlQueryParams := r.URL.Query()
-	sessionId := urlQueryParams.Get("id")
+	sessionId := urlQueryParams.Get("sessionId")
 
 	sessionUrl := fmt.Sprintf("http://35.225.36.244:9804/api/sessions/get/%v", sessionId)
 
@@ -524,9 +538,7 @@ func GetUserSleep(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(responseData)
 }
 
-
-
-func GetSessions(w http.ResponseWriter, r *http.Request) {
+func ListSessions(w http.ResponseWriter, r *http.Request) {
 	// Get the sessionId from the request body
 	// Fetch session details using the datastore link and type as sleep
 	// A function which fetches the following for the session
@@ -556,8 +568,7 @@ func GetSessions(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(responseData)
 }
 
-
-func GetSessionsSummary(w http.ResponseWriter, r *http.Request) {
+func GetSessionSummary(w http.ResponseWriter, r *http.Request) {
 	// get days from the url query
 	// take current date and then subtract the number of days to get the started_at date
 	urlQueryParams := r.URL.Query()
