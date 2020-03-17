@@ -131,7 +131,7 @@ func requestOtp(reqBody AuthRequestBody) (string, error) {
 			"Content-Type":  "application/x-www-form-urlencoded",
 		}, []byte(body), &twilioResponse)
 		logger.Debugf("%d, %v", code, twilioResponse)
-		if err != nil || code != http.StatusOK {
+		if err != nil || code != http.StatusCreated {
 			logger.Error("HTTP response code:", code, err)
 			return "", err
 		} else {
