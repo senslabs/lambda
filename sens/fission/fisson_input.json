@@ -2,19 +2,19 @@
     "list-sessions": {
         "src": "src/session.go",
         "entry": "ListSessions",
-        "path": "/api/sessions/get",
+        "path": "/api/sessions/list",
         "method": "GET"
     },
     "get-user-sleep": {
         "src": "src/session.go",
         "entry": "GetSessionSummary",
-        "path": "/api/session-summary/get",
+        "path": "/api/sessions/{id}/summary",
         "method": "GET"
     },
     "get-session": {
         "src": "src/session.go",
         "entry": "GetSession",
-        "path": "/api/session/get",
+        "path": "/api/sessions/{id}/get",
         "method": "GET"
     },
     "request-otp": {
