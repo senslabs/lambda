@@ -26,6 +26,7 @@
     "request-otp": {
         "src": "src/auth.go",
         "entry": "RequestOtp",
-        "method": "POST"
+        "method": "POST",
+        "path": "/api/otp/request"
     }
 }
