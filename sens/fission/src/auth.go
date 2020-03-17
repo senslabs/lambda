@@ -32,7 +32,7 @@ func RequestOtp(w http.ResponseWriter, r *http.Request) {
 		response.WriteError(w, http.StatusInternalServerError, err)
 	} else {
 		logger.Debug("OTP Sent")
-		fmt.Println(w, sessionId)
+		fmt.Fprintln(w, sessionId)
 	}
 }
 
