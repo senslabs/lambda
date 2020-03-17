@@ -26,7 +26,7 @@
     "list-sessions": {
         "src": "src/session.go",
         "entry": "ListSessions",
-        "path": "/api/sessions/get",
+        "path": "/api/sessions/list",
         "method": "GET"
     },
     "get-session-summary": {
