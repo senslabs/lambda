@@ -105,7 +105,7 @@ func mapUserAuth(w http.ResponseWriter, r *http.Request, category string, catego
 }
 
 //Get the category user details
-func getUserDetails(w http.ResponseWriter, r *http.Request, category string) {
+func getUserDetail(w http.ResponseWriter, r *http.Request, category string) {
 	url := fmt.Sprintf("%s/api/%s-details/create", DATASTORE_BASE_URL, strings.ToLower(category))
 	code, data, err := httpclient.GetR(url, nil, nil)
 	logger.Debugf("Code: %d, Data: %v", code, data)
@@ -118,16 +118,16 @@ func getUserDetails(w http.ResponseWriter, r *http.Request, category string) {
 	}
 }
 
-func GetOrgDetails(w http.ResponseWriter, r *http.Request) {
-	getUserDetails(w, r, "Org")
+func GetOrgDetail(w http.ResponseWriter, r *http.Request) {
+	getUserDetail(w, r, "Org")
 }
 
-func GetOpDetails(w http.ResponseWriter, r *http.Request) {
-	getUserDetails(w, r, "Op")
+func GetOpDetail(w http.ResponseWriter, r *http.Request) {
+	getUserDetail(w, r, "Op")
 }
 
-func GetUserDetails(w http.ResponseWriter, r *http.Request) {
-	getUserDetails(w, r, "User")
+func GetUserDetail(w http.ResponseWriter, r *http.Request) {
+	getUserDetail(w, r, "User")
 }
 
 func CreateOrg(w http.ResponseWriter, r *http.Request) {

@@ -87,14 +87,14 @@ type SessionSnapshots []SessionSnapshot
 
 type OperatorUser struct {
 	OpId   string `json:"OpId"`
-	UserId string `json:"UserId:`
+	UserId string `json:"UserId"`
 }
 
 type OperatorUsers []OperatorUser
 
 type OrganizationUser struct {
 	OrgId  string `json:"OrgId"`
-	UserId string `json:"UserId:`
+	UserId string `json:"UserId"`
 }
 
 type OrganizationUsers []OrganizationUser
@@ -360,7 +360,6 @@ func getUserList(r *http.Request) []string {
 //
 //}
 
-
 func getSessionData(sessionId string) Session {
 	sessionUrl := fmt.Sprintf("http://35.225.36.244:9804/api/sessions/get/%v", sessionId)
 
@@ -433,7 +432,6 @@ func getFromDataStore(URL string) []byte {
 	resp.Body.Close()
 	return responseBody
 }
-
 
 func GetUserSleep(w http.ResponseWriter, r *http.Request) {
 	// Get the sessionId from the request body
@@ -524,8 +522,6 @@ func GetUserSleep(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(responseData)
 }
 
-
-
 func GetSessions(w http.ResponseWriter, r *http.Request) {
 	// Get the sessionId from the request body
 	// Fetch session details using the datastore link and type as sleep
@@ -555,7 +551,6 @@ func GetSessions(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(responseData)
 }
-
 
 func GetSessionsSummary(w http.ResponseWriter, r *http.Request) {
 	// get days from the url query
