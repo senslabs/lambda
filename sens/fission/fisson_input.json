@@ -1,49 +1,74 @@
 {
-    "list-users": {
-        "src": "",
-        "entry": "ListUsers"
-    },
-    "get-user": {
-        "src": "",
-        "entry": "GetUser"
-    },
-    "get-user-settings": {
-        "src": "",
-        "entry": "GetUserSettings"
-    },
-    "list-user-sessions": {
-        "src": "",
-        "entry": "ListUserSessions"
-    },
-    "get-user-session": {
-        "src": "",
-        "entry": "GetUserSession"
-    },
-    "get-session-properties": {
-        "src": "",
-        "entry": "GetSessionProperties"
-    },
-    "get-sessions": {
+    "list-sessions": {
         "src": "src/session.go",
-        "entry": "GetSessions",
-        "path": "/api/sessions/get",
-        "method": "GET"
-    },
-    "get-sessions-summary": {
-        "src": "src/session.go",
-        "entry": "GetSessionsSummary",
-        "path": "/api/sessions-summary/get",
+        "entry": "ListSessions",
+        "path": "/api/sessions/list",
         "method": "GET"
     },
     "get-user-sleep": {
         "src": "src/session.go",
-        "entry": "GetUserSleep",
-        "path": "/api/user-sleep/get",
+        "entry": "GetSession",
+        "path": "/api/sessions/{id}/get",
+        "method": "GET"
+    },
+    "get-sessions-summary": {
+        "src": "src/session.go",
+        "entry": "GetSessionSummary",
+        "path": "/api/sessions/{id}/summary",
         "method": "GET"
     },
     "request-otp": {
         "src": "src/auth.go",
         "entry": "RequestOtp",
-        "method": "POST"
+        "method": "POST",
+        "path": "/api/otp/request"
+    },
+    "verify-otp": {
+        "src": "src/auth.go",
+        "entry": "VerifyOtp",
+        "method": "POST",
+        "path": "/api/otp/verify"
+    },
+    "create-auth": {
+        "src": "src/auth.go",
+        "entry": "CreateAuth",
+        "method": "POST",
+        "path": "/api/auths/create"
+    },
+    "create-org": {
+        "src": "src/auth.go",
+        "entry": "CreateOrg",
+        "method": "POST",
+        "path": "/api/orgs/create"
+    },
+    "create-op": {
+        "src": "src/auth.go",
+        "entry": "CreateOp",
+        "method": "POST",
+        "path": "/api/ops/create"
+    },
+    "create-user": {
+        "src": "src/auth.go",
+        "entry": "CreateUser",
+        "method": "POST",
+        "path": "/api/users/create"
+    },
+    "get-org-detail": {
+        "src": "src/auth.go",
+        "entry": "GetOrgDetail",
+        "method": "POST",
+        "path": "/api/orgs/{id}/detail"
+    },
+    "get-op-detail": {
+        "src": "src/auth.go",
+        "entry": "GetOpDetail",
+        "method": "POST",
+        "path": "/api/ops/{id}/detail"
+    },
+    "get-user-detail": {
+        "src": "src/auth.go",
+        "entry": "GetUserDetail",
+        "method": "POST",
+        "path": "/api/users/{id}/detail"
     }
 }
