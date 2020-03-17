@@ -16,10 +16,8 @@ import (
 )
 
 type AuthRequestBody struct {
-	Id      string
-	Medium  string
-	Otp     string
-	Session string
+	Id     string
+	Medium string
 }
 
 const DATASTORE_BASE_URL = "http://datastore.zonea.senslabs.io:9804"
@@ -41,7 +39,6 @@ func RequestOtp(w http.ResponseWriter, r *http.Request) {
 type VerifyRequestBody struct {
 	Id               string
 	Medium           string
-	Otp              string
 	Session          string
 	ConfirmationCode string
 }
@@ -120,7 +117,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 type TwilioSendOtpResponse struct {
-	SessionSid string `json:"service_sid"`
+	ServiceSid string `json:"service_sid"`
 }
 
 func requestOtp(reqBody AuthRequestBody) (string, error) {
@@ -138,7 +135,7 @@ func requestOtp(reqBody AuthRequestBody) (string, error) {
 			logger.Error("HTTP response code:", code, err)
 			return "", err
 		} else {
-			return twilioResponse.SessionSid, nil
+			return twilioResponse.ServiceSid, nil
 		}
 	}
 	return "", errors.New(http.StatusInternalServerError, "Only Mobiles are supported for sending OTP")
