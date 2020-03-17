@@ -23,19 +23,22 @@
         "src": "",
         "entry": "GetSessionProperties"
     },
-    "get-session-snapshot": {
+    "get-sessions": {
         "src": "src/session.go",
-        "entry": "GetSessionSnapshot",
+        "entry": "GetSessions",
+        "path": "/api/sessions/get",
         "method": "GET"
     },
-    "get-session-summary": {
+    "get-sessions-summary": {
         "src": "src/session.go",
         "entry": "GetSessionsSummary",
+        "path": "/api/sessions-summary/get",
         "method": "GET"
     },
     "get-user-sleep": {
         "src": "src/session.go",
         "entry": "GetUserSleep",
+        "path": "/api/user-sleep/get",
         "method": "GET"
     },
     "request-otp": {
