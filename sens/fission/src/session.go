@@ -321,30 +321,44 @@ func getUserList(r *http.Request) []string {
 	return userIdList
 }
 
-// func GetSpecificAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
-// 	urlQueryParams := r.URL.Query()
-// 	sessionId := urlQueryParams.Get("id")
+//func GetParameterWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
+//	urlQueryParams := r.URL.Query()
+//	sessionId := urlQueryParams.Get("id")
+//
+//	sessionData := getSessionData(sessionId)
+//
+//	sessionStartTime := sessionData.StartTime
+//	sessionEndTime := sessionData.EndTime
+//
+//
+//}
 
-// 	sessionData := getSessionData(sessionId)
-
-// 	sessionStartTime := sessionData.StartTime
-// 	sessionEndTime := sessionData.EndTime
-
-// 	requiredStressData := map[string]TimeSeriesData{
-// 		"Vlf":   make(TimeSeriesData, 0),
-// 		"Hf":    make(TimeSeriesData, 0),
-// 		"Rmssd": make(TimeSeriesData, 0),
-// 		"Pnn50": make(TimeSeriesData, 0),
-// 	}
-
-// }
-
-// func GetCategoryAdvancedSessionData() {
-// }
-
-// func fetchAdvancedSessionData() {
-
-// }
+//func GetCategoryWiseAdvancedSessionData() {
+//	categoriesData := map[string]map[string]TimeSeriesData{
+//		"Stress" : map[string]TimeSeriesData {
+//			"Vlf":   make(TimeSeriesData, 0),
+//			"Hf":    make(TimeSeriesData, 0),
+//			"Rmssd": make(TimeSeriesData, 0),
+//			"Pnn50": make(TimeSeriesData, 0),
+//		},
+//		"OriginalStress" : map[string]TimeseriesData {
+//			"Stress": make(TimeSeriesData, 0)
+//		},
+//		"SlepeData": map[string]TimeseriesData {
+//			""
+//		}
+//	}
+//	requiredStressData := map[string]interface{
+//		"Vlf":   make(TimeSeriesData, 0),
+//		"Hf":    make(TimeSeriesData, 0),
+//		"Rmssd": make(TimeSeriesData, 0),
+//		"Pnn50": make(TimeSeriesData, 0),
+//	}
+//}
+//
+//func fetchAdvancedSessionData() {
+//
+//}
 
 
 func getSessionData(sessionId string) Session {
@@ -512,7 +526,7 @@ func GetUserSleep(w http.ResponseWriter, r *http.Request) {
 
 
 
-func GetSessionSnapshot(w http.ResponseWriter, r *http.Request) {
+func GetSessions(w http.ResponseWriter, r *http.Request) {
 	// Get the sessionId from the request body
 	// Fetch session details using the datastore link and type as sleep
 	// A function which fetches the following for the session
@@ -557,7 +571,6 @@ func GetSessionsSummary(w http.ResponseWriter, r *http.Request) {
 	generatedSummary := make(map[int64]SessionsSummary, 0)
 
 	for _, currentUserId := range userIdList {
-		userSessionsData := 
 		url := fmt.Sprintf("http://35.225.36.244:9804/api/sessions/find/?and=userId:%v&range=timestamp:%v:%v", currentUserId, startDate, endDate)
 		userSessionResponseData := getFromDataStore(url)
 		var userSessionsData Sessions
