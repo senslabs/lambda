@@ -26,10 +26,10 @@
     "list-sessions": {
         "src": "src/session.go",
         "entry": "ListSessions",
-        "path": "/api/sessions/list",
+        "path": "/api/sessions/get",
         "method": "GET"
     },
-    "get-session-summary": {
+    "get-user-sleep": {
         "src": "src/session.go",
         "entry": "GetSessionSummary",
         "path": "/api/session-summary/get",
