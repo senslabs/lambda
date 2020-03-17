@@ -22,5 +22,10 @@
     "get-session-properties": {
         "src": "",
         "entry": "GetSessionProperties"
+    },
+    "request-otp": {
+        "src": "src/auth.go",
+        "entry": "RequestOtp",
+        "method": "POST"
     }
 }

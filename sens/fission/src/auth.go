@@ -120,7 +120,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 type TwilioSendOtpResponse struct {
-	SessionSid string
+	SessionSid string `json:"service_sid"`
 }
 
 func requestOtp(reqBody AuthRequestBody) (string, error) {
