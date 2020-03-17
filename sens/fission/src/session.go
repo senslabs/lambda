@@ -87,14 +87,14 @@ type SessionSnapshots []SessionSnapshot
 
 type OperatorUser struct {
 	OpId   string `json:"OpId"`
-	UserId string `json:"UserId:`
+	UserId string `json:"UserId"`
 }
 
 type OperatorUsers []OperatorUser
 
 type OrganizationUser struct {
 	OrgId  string `json:"OrgId"`
-	UserId string `json:"UserId:`
+	UserId string `json:"UserId"`
 }
 
 type OrganizationUsers []OrganizationUser
