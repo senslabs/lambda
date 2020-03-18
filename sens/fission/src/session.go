@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/senslabs/lambda/sens/fission/request"
 )
 
 type Session struct {
@@ -159,10 +161,9 @@ func fetchSessionRecords(sessionStartTime int64, sessionEndTime int64, requiredS
 }
 
 func getUserSessions(r *http.Request) Sessions {
-	urlQueryParams := r.URL.Query()
 	//sessionId := urlQueryParams.Get("id")
-	sessionType := urlQueryParams.Get("type")
-	sLimit := urlQueryParams.Get("limit")
+	sessionType := request.GetQueryParam(r, "type")
+	sLimit := request.GetQueryParam(r, "limit")
 	var limit int64
 	if len(sLimit) != 0 {
 		limit, _ = strconv.ParseInt(sLimit, 10, 64)
@@ -301,9 +302,9 @@ func getTotalDurationFromStages(stages TimeSeriesData) int64 {
 func getUserList(r *http.Request) []string {
 	var userIdList []string
 
-	orgId := r.Header.Get("x-sens-org-id")
-	opId := r.Header.Get("x-sens-op-id")
-	userId := r.Header.Get("x-sens-op-id")
+	orgId := request.GetHeaderValue(r, "org-id")
+	opId := request.GetHeaderValue(r, "op-id")
+	userId := request.GetHeaderValue(r, "user-id")
 
 	if len(orgId) != 0 {
 		// fetch users under this organization id
@@ -458,8 +459,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 	// 3. Fetch events using the UserId, Event Start Time should be between Session Start Time and Session End Time
 	// Create Sleep Map Data
 	// Return Sleep Map Data through Response
-	urlQueryParams := r.URL.Query()
-	sessionId := urlQueryParams.Get("sessionId")
+	sessionId := request.GetPathParam(r, "Id")
 
 	sessionUrl := fmt.Sprintf("http://35.225.36.244:9804/api/sessions/get/%v", sessionId)
 
@@ -568,11 +568,10 @@ func ListSessions(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(responseData)
 }
 
-func GetSessionSummary(w http.ResponseWriter, r *http.Request) {
+func GetGeneralSummary(w http.ResponseWriter, r *http.Request) {
 	// get days from the url query
 	// take current date and then subtract the number of days to get the started_at date
-	urlQueryParams := r.URL.Query()
-	sDays := urlQueryParams.Get("days")
+	sDays := request.GetQueryParam(r, "days")
 	days, _ := strconv.ParseInt(sDays, 10, 64)
 	endDate := time.Now().Unix()
 	startDate := endDate - days*3600*24
@@ -602,6 +601,7 @@ func GetSessionSummary(w http.ResponseWriter, r *http.Request) {
 			} else if currentSessionType == "Meditation" {
 				currentDateSessionSummary.Meditations++
 			}
+			generatedSummary[sessionStartTime] = currentDateSessionSummary
 		}
 	}
 
