@@ -17,6 +17,12 @@
         "path": "/api/general-summary/get",
         "method": "GET"
     },
+    "get-session-property": {
+        "src": "src/session.go",
+        "entry": "GetSessionPropertyFunc",
+        "path": "/api/session-property/{id}/get",
+        "method": "GET"
+    },
     "get-session": {
         "src": "src/session.go",
         "entry": "GetSession",

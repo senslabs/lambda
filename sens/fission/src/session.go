@@ -2,14 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"reflect"
 	"strconv"
 	"time"
 
 	"github.com/senslabs/lambda/sens/fission/request"
+	"github.com/senslabs/lambda/sens/fission/response"
 )
 
 type Session struct {
@@ -83,6 +86,10 @@ type SessionSnapshot struct {
 	BreathRate int64
 	Duration   int64
 	Recovery   int64
+	Id         string
+	UserId     string
+	StartTime  int64
+	EndTime    int64
 }
 
 type SessionSnapshots []SessionSnapshot
@@ -134,10 +141,10 @@ func fetchSessionProperties(sessionId string, requiredSessionProperties map[stri
 	return requiredSessionProperties
 }
 
-func fetchSessionRecords(sessionStartTime int64, sessionEndTime int64, requiredSessionRecords map[string]TimeSeriesData) map[string]TimeSeriesData {
+func fetchSessionRecords(sessionUserId string, sessionStartTime int64, sessionEndTime int64, requiredSessionRecords *map[string]TimeSeriesData) {
 	// Fetch records
-	for key, _ := range requiredSessionRecords {
-		sessionRecordsUrl := fmt.Sprintf("http://35.225.36.244:9804/api/sessions-records/find/?and=name:%v&range:%v:%v", key, sessionStartTime, sessionEndTime)
+	for key := range *requiredSessionRecords {
+		sessionRecordsUrl := fmt.Sprintf("http://35.225.36.244:9804/api/sessions-records/find/?and=name:%v&and=name:%v&range:%v:%v", key, sessionUserId, sessionStartTime, sessionEndTime)
 		sessionRecordsReponseData := getFromDataStore(sessionRecordsUrl)
 		var sessionRecordsData SessionRecords
 		json.Unmarshal(sessionRecordsReponseData, &sessionRecordsData)
@@ -146,18 +153,16 @@ func fetchSessionRecords(sessionStartTime int64, sessionEndTime int64, requiredS
 			timestamp := value.Timestamp
 			var newEvent TimeSeries
 			newEvent.Time = timestamp
-			if key == "HeartRate" || key == "BreathRate" {
+			if key == "HeartRate" || key == "BreathRate" || key == "Stress" || key == "Recovery" {
 				value, _ := strconv.ParseFloat(value.Value, 10)
 				newEvent.Value = value
 			} else if key == "Stage" {
 				value, _ := strconv.ParseInt(value.Value, 10, 64)
 				newEvent.Value = value
 			}
-			requiredSessionRecords[key] = append(requiredSessionRecords[key], newEvent)
+			(*requiredSessionRecords)[key] = append((*requiredSessionRecords)[key], newEvent)
 		}
 	}
-
-	return requiredSessionRecords
 }
 
 func getUserSessions(r *http.Request) Sessions {
@@ -200,7 +205,7 @@ func getSessionSnapshot(sessionId string, sessionType string) SessionSnapshot {
 	if err != nil {
 		log.Println("Error unmarshalling response data to sleep data")
 	}
-
+	sessionUserId := sessionData.UserId
 	sessionStartTime := sessionData.StartTime
 	sessionEndTime := sessionData.EndTime
 
@@ -229,16 +234,17 @@ func getSessionSnapshot(sessionId string, sessionType string) SessionSnapshot {
 		requiredSessionRecords["Stage"] = make(TimeSeriesData, 0)
 	}
 
-	requiredSessionRecords = fetchSessionRecords(sessionStartTime, sessionEndTime, requiredSessionRecords)
+	fetchSessionRecords(sessionUserId, sessionStartTime, sessionEndTime, &requiredSessionRecords)
 
-	sessionSnapshot := createSessionSnapshotData(sessionStartTime, sessionEndTime, sessionType, requiredSessionProperties, requiredSessionRecords)
+	sessionSnapshot := createSessionSnapshotData(sessionData, requiredSessionProperties, requiredSessionRecords)
 
 	return sessionSnapshot
 }
 
-func createSessionSnapshotData(sessionStartTime int64, sessionEndTime int64, sessionType string, requiredSessionProperties map[string]int64, requiredSessionRecords map[string]TimeSeriesData) SessionSnapshot {
-	sessionSleepTime := sessionStartTime
-	sessionWakeupTime := sessionEndTime
+func createSessionSnapshotData(sessionData Session, requiredSessionProperties map[string]int64, requiredSessionRecords map[string]TimeSeriesData) SessionSnapshot {
+	sessionSleepTime := sessionData.StartTime
+	sessionWakeupTime := sessionData.EndTime
+	sessionType := sessionData.Type
 
 	if sessionType == "Sleep" {
 		sessionSleepTime = requiredSessionProperties["SleepTime"]
@@ -260,8 +266,17 @@ func createSessionSnapshotData(sessionStartTime int64, sessionEndTime int64, ses
 	sessionSnapshot.Score = sessionScore
 	sessionSnapshot.BreathRate = sessionBreathRateAverage
 	sessionSnapshot.HeartRate = sessionHeartRateAverage
-	sessionSnapshot.LastSync = sessionEndTime
+	sessionSnapshot.LastSync = sessionData.EndTime
 	sessionSnapshot.Recovery = sessionRecovery
+	sessionSnapshot.Id = sessionData.Id
+	sessionSnapshot.UserId = sessionData.UserId
+	if sessionType == "Sleep" {
+		sessionSnapshot.StartTime = sessionSleepTime
+		sessionSnapshot.EndTime = sessionWakeupTime
+	} else {
+		sessionSnapshot.StartTime = sessionData.StartTime
+		sessionSnapshot.EndTime = sessionData.EndTime
+	}
 
 	return sessionSnapshot
 }
@@ -322,61 +337,6 @@ func getUserList(r *http.Request) []string {
 	return userIdList
 }
 
-// func GetParameterWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
-// 	urlQueryParams := r.URL.Query()
-// 	sessionId := urlQueryParams.Get("id")
-
-// 	sessionData := getSessionData(sessionId)
-
-// 	sessionStartTime := sessionData.StartTime
-// 	sessionEndTime := sessionData.EndTime
-// }
-
-// func GetCategoryWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
-// 	categoriesData := map[string]interface{}{
-// 		"Stress" : map[string]TimeSeriesData {
-// 			"Vlf":   make(TimeSeriesData, 0),
-// 			"Hf":    make(TimeSeriesData, 0),
-// 			"Rmssd": make(TimeSeriesData, 0),
-// 			"Pnn50": make(TimeSeriesData, 0),
-// 		},
-// 		"OriginalStress" : map[string]interface{} {
-// 			"Stress": make(TimeSeriesData, 0),
-// 		},
-// 		"Sleep": map[string]interface{} {
-// 			"Stages": make(TimeSeriesData, 0),
-// 		},
-// 		"Heart": map[string]interface{} {
-// 			"JjPeaks": make(TimeSeriesData,0),
-// 			"HeartRate": make(TimeSeriesData, 0),
-// 			"HRV Pack": map[string]interface{} {
-// 				"Sdnn": make(TimeSeriesData, 0),
-// 				"Rmssd": make(TimeSeriesData, 0),
-// 				"Pnn50": make(TimeSeriesData, 0),
-// 				"Vlf":   make(TimeSeriesData, 0),
-// 				"Hf":    make(TimeSeriesData, 0),
-// 			},
-// 		},
-// 		"Respiration" : map[string]interface{} {
-// 			"ZeroCrossing" : make(TimeSeriesData, 0),
-// 			"Snoring": make(TimeSeriesData, 0),
-// 			"Apnea": make(TimeSeriesData, 0),
-// 		},
-// 	}
-
-// 	requestedKey := r.URL.Query().Get("dataKey")
-
-// 	if value, ok := categoriesData[requestedKey]; ok {
-// 		log.Println(value)
-// 		log.Println(reflect.TypeOf(value))
-
-// 	}
-
-// }
-
-// func fetchAdvancedSessionData() {
-// }
-
 func getSessionData(sessionId string) Session {
 	sessionUrl := fmt.Sprintf("http://35.225.36.244:9804/api/sessions/get/%v", sessionId)
 
@@ -393,12 +353,15 @@ func getSessionData(sessionId string) Session {
 }
 
 func getOrganizationUsers(orgId string) []string {
+	var orgUsers []string
 	url := fmt.Sprintf("http://35.225.36.244:9804/api/org-users/find/?and=orgId:%v&limit=10000", orgId)
 	organizationUsersResponseData := getFromDataStore(url)
 	var organizationUserData OrganizationUsers
-	json.Unmarshal(organizationUsersResponseData, &organizationUserData)
 
-	var orgUsers []string
+	err := json.Unmarshal(organizationUsersResponseData, &organizationUserData)
+	if err != nil {
+		log.Println("Error fetching org users")
+	}
 
 	for _, orgUser := range organizationUserData {
 		orgUsers = append(orgUsers, orgUser.UserId)
@@ -408,12 +371,15 @@ func getOrganizationUsers(orgId string) []string {
 }
 
 func getOperatorUsers(orgId string) []string {
+	var opUsers []string
 	url := fmt.Sprintf("http://35.225.36.244:9804/api/op-users/find/?and=orgId:%v&limit=10000", orgId)
 	operatorUsersResponseData := getFromDataStore(url)
 	var operatorUserData OperatorUsers
-	json.Unmarshal(operatorUsersResponseData, &operatorUserData)
-
-	var opUsers []string
+	err := json.Unmarshal(operatorUsersResponseData, &operatorUserData)
+	if err != nil {
+		log.Println("Error fetching operator users")
+		return opUsers
+	}
 
 	for _, opUser := range operatorUserData {
 		opUsers = append(opUsers, opUser.UserId)
@@ -440,13 +406,18 @@ func getFromDataStore(URL string) []byte {
 	if err != nil {
 		log.Panicf("Error creating a new request for fetching %v", URL)
 	}
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Panic("Error performing a request")
 	}
 	responseBody, _ := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		log.Panic("Error closing the response body")
+	}
 	return responseBody
 }
 
@@ -471,7 +442,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error unmarshalling response data to sleep data")
 	}
-
+	sessionUserId := sessionData.UserId
 	sessionStartTime := sessionData.StartTime
 	sessionEndTime := sessionData.EndTime
 
@@ -498,7 +469,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 		"Snoring":    make(TimeSeriesData, 0),
 	}
 
-	requiredSessionRecords = fetchSessionRecords(sessionStartTime, sessionEndTime, requiredSessionRecords)
+	fetchSessionRecords(sessionUserId, sessionStartTime, sessionEndTime, &requiredSessionRecords)
 
 	sessionSleepTime := requiredSessionProperties["SleepTime"]
 	sessionWakeupTime := requiredSessionProperties["WakeupTime"]
@@ -610,4 +581,138 @@ func GetGeneralSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(responseData)
+}
+
+func validateAndFetchQueryParameters(w http.ResponseWriter, r *http.Request) (string, int64, int64, string) {
+	sFrom := request.GetQueryParam(r, "from")
+	sTo := request.GetQueryParam(r, "to")
+	sessionId := request.GetPathParam(r, "id")
+	property := request.GetQueryParam(r, "property")
+
+	if len(sFrom) == 0 {
+		response.WriteError(w, http.StatusBadRequest, errors.New("From not passed with request"))
+	}
+	if len(sTo) == 0 {
+		response.WriteError(w, http.StatusBadRequest, errors.New("To not passed with request"))
+	}
+	if len(sessionId) == 0 {
+		response.WriteError(w, http.StatusBadRequest, errors.New("Session Id not passed with request"))
+	}
+	if len(property) == 0 {
+		response.WriteError(w, http.StatusBadRequest, errors.New("Property not passed with request"))
+	}
+
+	from, _ := strconv.ParseInt(sFrom, 10, 64)
+	to, _ := strconv.ParseInt(sTo, 10, 64)
+
+	return sessionId, from, to, property
+}
+
+func GetSessionPropertyFunc(w http.ResponseWriter, r *http.Request) {
+	sessionId, from, to, property := validateAndFetchQueryParameters(w, r)
+
+	timeData := map[string]TimeSeriesData{
+		property: make(TimeSeriesData, 0),
+	}
+
+	fetchSessionRecords(sessionId, from, to, &timeData)
+
+	responseData := map[string]interface{}{
+		"data": timeData,
+	}
+
+	err := json.NewEncoder(w).Encode(responseData)
+
+	if err != nil {
+		response.WriteError(w, http.StatusInternalServerError, err)
+	}
+}
+
+func GetParameterWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
+	sessionId := request.GetPathParam(r, "id")
+
+	sessionData := getSessionData(sessionId)
+	sessionUserId := sessionData.UserId
+	sessionStartTime := sessionData.StartTime
+	sessionEndTime := sessionData.EndTime
+
+	requestedKey := r.URL.Query().Get("dataKey")
+
+	requestedData := map[string]TimeSeriesData{
+		requestedKey: make(TimeSeriesData, 0),
+	}
+
+	fetchSessionRecords(sessionUserId, sessionStartTime, sessionEndTime, &requestedData)
+
+	responseData := map[string]interface{}{
+		"data": requestedData,
+	}
+
+	json.NewEncoder(w).Encode(responseData)
+}
+
+func GetCategoryWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
+	sessionId := request.GetPathParam(r, "id")
+
+	session := getSessionData(sessionId)
+	sessionUserId := session.UserId
+	sessionStartTime := session.StartTime
+	sessionEndTime := session.EndTime
+
+	categoriesData := map[string]interface{}{
+		"Stress": map[string]TimeSeriesData{
+			"Vlf":   make(TimeSeriesData, 0),
+			"Hf":    make(TimeSeriesData, 0),
+			"Rmssd": make(TimeSeriesData, 0),
+			"Pnn50": make(TimeSeriesData, 0),
+		},
+		"OriginalStress": map[string]TimeSeriesData{
+			"Stress": make(TimeSeriesData, 0),
+		},
+		"Sleep": map[string]TimeSeriesData{
+			"Stages": make(TimeSeriesData, 0),
+		},
+		"Heart": map[string]TimeSeriesData{
+			"JjPeaks":   make(TimeSeriesData, 0),
+			"HeartRate": make(TimeSeriesData, 0),
+			"Sdnn":      make(TimeSeriesData, 0),
+			"Rmssd":     make(TimeSeriesData, 0),
+			"Pnn50":     make(TimeSeriesData, 0),
+			"Vlf":       make(TimeSeriesData, 0),
+			"Hf":        make(TimeSeriesData, 0),
+		},
+		"HRV Pack": map[string]TimeSeriesData{
+			"Sdnn":  make(TimeSeriesData, 0),
+			"Rmssd": make(TimeSeriesData, 0),
+			"Pnn50": make(TimeSeriesData, 0),
+			"Vlf":   make(TimeSeriesData, 0),
+			"Hf":    make(TimeSeriesData, 0),
+		},
+		"Respiration": map[string]TimeSeriesData{
+			"ZeroCrossing": make(TimeSeriesData, 0),
+			"Snoring":      make(TimeSeriesData, 0),
+			"Apnea":        make(TimeSeriesData, 0),
+		},
+	}
+
+	requestedKey := r.URL.Query().Get("dataKey")
+	w.Header().Add("Content-Type", "application/json")
+	if value, ok := categoriesData[requestedKey]; ok {
+		typeOfValue := reflect.TypeOf(value)
+		if typeOfValue == reflect.TypeOf(map[string]TimeSeriesData{}) {
+			typeCastedValue := value.(map[string]TimeSeriesData)
+			log.Println(typeCastedValue)
+			fetchSessionRecords(sessionUserId, sessionStartTime, sessionEndTime, &typeCastedValue)
+		}
+
+		responseData := map[string]interface{}{
+			"data": value,
+		}
+		json.NewEncoder(w).Encode(responseData)
+	} else {
+		log.Println("No category by that name found")
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Category not found!",
+		})
+	}
 }
