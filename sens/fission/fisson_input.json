@@ -5,16 +5,28 @@
         "path": "/api/sessions/list",
         "method": "GET"
     },
-    "get-user-sleep": {
+    "get-session-summary": {
         "src": "src/session.go",
         "entry": "GetSessionSummary",
         "path": "/api/sessions/{id}/summary",
         "method": "GET"
     },
+    "get-general-summary" : {
+        "src": "src/session.go",
+        "entry": "GetGeneralSummary",
+        "path": "/api/general-summary/get",
+        "method": "GET"
+    },
+    "get-session-property": {
+        "src": "src/session.go",
+        "entry": "GetSessionPropertyFunc",
+        "path": "/api/session-property/{id}/get",
+        "method": "GET"
+    },
     "get-session": {
         "src": "src/session.go",
         "entry": "GetSession",
-        "path": "/api/sessions/{id}/get",
+        "path": "/api/session/{id}/get",
         "method": "GET"
     },
     "request-otp": {
