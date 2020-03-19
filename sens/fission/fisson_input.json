@@ -1,4 +1,10 @@
 {
+    "test-ds": {
+        "src": "src/test.go",
+        "entry": "TestDatastore",
+        "path": "/test",
+        "method": "POST"
+    },
     "list-sessions": {
         "src": "src/session.go",
         "entry": "ListSessions",
