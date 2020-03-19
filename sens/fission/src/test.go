@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/senslabs/alpha/sens/httpclient"
 	"github.com/senslabs/alpha/sens/logger"
@@ -18,7 +17,7 @@ type Data struct {
 
 func TestDatastore(w http.ResponseWriter, r *http.Request) {
 	var d Data
-	baseUrl := os.Getenv("DATASTORE_BASE_URL")
+	baseUrl := GetDatastoreUrl()
 	url := fmt.Sprintf("%s%s", baseUrl, d.Path)
 	json.NewDecoder(r.Body).Decode(&d)
 	if d.Method == "GET" {
