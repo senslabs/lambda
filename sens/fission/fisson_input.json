@@ -1,90 +1,90 @@
 {
     "test-ds": {
-        "src": "src/test.go",
+        "src": "src/test/main.go",
         "entry": "TestDatastore",
         "path": "/test",
         "method": "POST"
     },
     "list-sessions": {
-        "src": "src/session.go",
+        "src": "src/session/main.go",
         "entry": "ListSessions",
         "path": "/api/sessions/list",
         "method": "GET"
     },
     "get-session-summary": {
-        "src": "src/session.go",
+        "src": "src/session/main.go",
         "entry": "GetSessionSummary",
         "path": "/api/sessions/{id}/summary",
         "method": "GET"
     },
     "get-general-summary" : {
-        "src": "src/session.go",
+        "src": "src/session/main.go",
         "entry": "GetGeneralSummary",
         "path": "/api/general-summary/get",
         "method": "GET"
     },
     "get-session-property": {
-        "src": "src/session.go",
+        "src": "src/session/main.go",
         "entry": "GetSessionPropertyFunc",
         "path": "/api/session-property/{id}/get",
         "method": "GET"
     },
     "get-session": {
-        "src": "src/session.go",
+        "src": "src/session/main.go",
         "entry": "GetSession",
         "path": "/api/session/{id}/get",
         "method": "GET"
     },
     "request-otp": {
-        "src": "src/auth.go",
+        "src": "src/auth/main.go",
         "entry": "RequestOtp",
         "method": "POST",
         "path": "/api/otp/request"
     },
     "verify-otp": {
-        "src": "src/auth.go",
+        "src": "src/auth/main.go",
         "entry": "VerifyOtp",
         "method": "POST",
         "path": "/api/otp/verify"
     },
     "create-auth": {
-        "src": "src/auth.go",
+        "src": "src/auth/main.go",
         "entry": "CreateAuth",
         "method": "POST",
         "path": "/api/auths/create"
     },
     "create-org": {
-        "src": "src/auth.go",
+        "src": "src/auth/main.go",
         "entry": "CreateOrg",
         "method": "POST",
         "path": "/api/orgs/create"
     },
     "create-op": {
-        "src": "src/auth.go",
+        "src": "src/auth/main.go",
         "entry": "CreateOp",
         "method": "POST",
         "path": "/api/ops/create"
     },
     "create-user": {
-        "src": "src/auth.go",
+        "src": "src/auth/main.go",
         "entry": "CreateUser",
         "method": "POST",
         "path": "/api/users/create"
     },
     "get-org-detail": {
-        "src": "src/auth.go",
+        "src": "src/auth/main.go",
         "entry": "GetOrgDetail",
         "method": "POST",
         "path": "/api/orgs/{id}/detail"
     },
     "get-op-detail": {
-        "src": "src/auth.go",
+        "src": "src/auth/main.go",
         "entry": "GetOpDetail",
         "method": "POST",
         "path": "/api/ops/{id}/detail"
     },
     "get-user-detail": {
-        "src": "src/auth.go",
+        "src": "src/auth/main.go",
         "entry": "GetUserDetail",
         "method": "POST",
         "path": "/api/users/{id}/detail"
