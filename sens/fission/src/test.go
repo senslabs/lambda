@@ -32,11 +32,11 @@ func TestDatastore(w http.ResponseWriter, r *http.Request) {
 	if d.Method == "GET" {
 		code, data, err := httpclient.GetR(url, nil, nil)
 		logger.Debug(code, data, err)
-		fmt.Fprintln(w, code, ",", data, "Error:", err)
+		fmt.Fprintln(w, code, ",", string(data), "Error:", err)
 	} else if b, err := json.Marshal(d.Body); err != nil {
 		fmt.Fprintln(w, "Error:", err)
 	} else {
 		code, data, err := httpclient.PostR(url, nil, nil, b)
-		fmt.Fprintln(w, code, ",", data, "Error:", err)
+		fmt.Fprintln(w, code, ",", string(data), "Error:", err)
 	}
 }
