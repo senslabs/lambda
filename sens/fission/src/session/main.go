@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/senslabs/lambda/sens/fission/config"
 	"github.com/senslabs/lambda/sens/fission/request"
 	"github.com/senslabs/lambda/sens/fission/response"
-	"github.com/senslabs/lambda/sens/fission/config"
 )
 
 type Session struct {
@@ -125,7 +125,7 @@ type SessionsSummary struct {
 func fetchSessionProperties(sessionId string, requiredSessionProperties map[string]int64) map[string]int64 {
 	// Fetching session properties
 	for key := range requiredSessionProperties {
-		sessionPropertiesUrl := fmt.Sprintf("%v/api/sessions-properties/find/?and=sessionId:%v&and=name:%v&limit=1", config.getDatastoreUrl(), sessionId, key)
+		sessionPropertiesUrl := fmt.Sprintf("%v/api/sessions-properties/find/?and=sessionId:%v&and=name:%v&limit=1", config.GetDatastoreUrl(), sessionId, key)
 		sessionPropertiesResponseData := getFromDataStore(sessionPropertiesUrl)
 
 		var sessionPropertiesData SessionProperties
@@ -145,7 +145,7 @@ func fetchSessionProperties(sessionId string, requiredSessionProperties map[stri
 func fetchSessionRecords(sessionUserId string, sessionStartTime int64, sessionEndTime int64, requiredSessionRecords *map[string]TimeSeriesData) {
 	// Fetch records
 	for key := range *requiredSessionRecords {
-		sessionRecordsUrl := fmt.Sprintf("%v/api/sessions-records/find/?and=name:%v&and=name:%v&range:%v:%v", config.getDatastoreUrl(), key, sessionUserId, sessionStartTime, sessionEndTime)
+		sessionRecordsUrl := fmt.Sprintf("%v/api/sessions-records/find/?and=name:%v&and=name:%v&range:%v:%v", config.GetDatastoreUrl(), key, sessionUserId, sessionStartTime, sessionEndTime)
 		sessionRecordsReponseData := getFromDataStore(sessionRecordsUrl)
 		var sessionRecordsData SessionRecords
 		json.Unmarshal(sessionRecordsReponseData, &sessionRecordsData)
@@ -187,7 +187,7 @@ func getUserSessions(r *http.Request) Sessions {
 	var userSessionsData Sessions
 
 	for _, currentUserId := range userIdList {
-		url := fmt.Sprintf("%v/api/sessions/find/?and=userId:%v&limit=%v&type=%v", config.getDatastoreUrl(), currentUserId, limit, sessionType)
+		url := fmt.Sprintf("%v/api/sessions/find/?and=userId:%v&limit=%v&type=%v", config.GetDatastoreUrl(), currentUserId, limit, sessionType)
 		userSessionResponseData := getFromDataStore(url)
 		json.Unmarshal(userSessionResponseData, &userSessionsData)
 	}
@@ -196,7 +196,7 @@ func getUserSessions(r *http.Request) Sessions {
 }
 
 func getSessionSnapshot(sessionId string, sessionType string) SessionSnapshot {
-	sessionUrl := fmt.Sprintf("%v/api/sessions/get/%v", config.getDatastoreUrl(), sessionId)
+	sessionUrl := fmt.Sprintf("%v/api/sessions/get/%v", config.GetDatastoreUrl(), sessionId)
 
 	sessionResponseData := getFromDataStore(sessionUrl)
 
@@ -339,7 +339,7 @@ func getUserList(r *http.Request) []string {
 }
 
 func getSessionData(sessionId string) Session {
-	sessionUrl := fmt.Sprintf("%v/api/sessions/get/%v", config.getDatastoreUrl(), sessionId)
+	sessionUrl := fmt.Sprintf("%v/api/sessions/get/%v", config.GetDatastoreUrl(), sessionId)
 
 	sessionResponseData := getFromDataStore(sessionUrl)
 
@@ -355,7 +355,7 @@ func getSessionData(sessionId string) Session {
 
 func getOrganizationUsers(orgId string) []string {
 	var orgUsers []string
-	url := fmt.Sprintf("%v/api/org-users/find/?and=orgId:%v&limit=10000", config.getDatastoreUrl(), orgId)
+	url := fmt.Sprintf("%v/api/org-users/find/?and=orgId:%v&limit=10000", config.GetDatastoreUrl(), orgId)
 	organizationUsersResponseData := getFromDataStore(url)
 	var organizationUserData OrganizationUsers
 
@@ -373,7 +373,7 @@ func getOrganizationUsers(orgId string) []string {
 
 func getOperatorUsers(orgId string) []string {
 	var opUsers []string
-	url := fmt.Sprintf("%v/api/op-users/find/?and=orgId:%v&limit=10000", config.getDatastoreUrl(), orgId)
+	url := fmt.Sprintf("%v/api/op-users/find/?and=orgId:%v&limit=10000", config.GetDatastoreUrl(), orgId)
 	operatorUsersResponseData := getFromDataStore(url)
 	var operatorUserData OperatorUsers
 	err := json.Unmarshal(operatorUsersResponseData, &operatorUserData)
@@ -433,7 +433,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 	// Return Sleep Map Data through Response
 	sessionId := request.GetPathParam(r, "Id")
 
-	sessionUrl := fmt.Sprintf("%v/api/sessions/get/%v", config.getDatastoreUrl(), sessionId)
+	sessionUrl := fmt.Sprintf("%v/api/sessions/get/%v", config.GetDatastoreUrl(), sessionId)
 
 	sessionResponseData := getFromDataStore(sessionUrl)
 
@@ -553,7 +553,7 @@ func GetGeneralSummary(w http.ResponseWriter, r *http.Request) {
 	generatedSummary := make(map[int64]SessionsSummary, 0)
 
 	for _, currentUserId := range userIdList {
-		url := fmt.Sprintf("%v/api/sessions/find/?and=userId:%v&range=timestamp:%v:%v", config.getDatastoreUrl(), currentUserId, startDate, endDate)
+		url := fmt.Sprintf("%v/api/sessions/find/?and=userId:%v&range=timestamp:%v:%v", config.GetDatastoreUrl(), currentUserId, startDate, endDate)
 		userSessionResponseData := getFromDataStore(url)
 		var userSessionsData Sessions
 		json.Unmarshal(userSessionResponseData, &userSessionsData)

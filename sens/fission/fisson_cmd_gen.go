@@ -28,6 +28,30 @@ func Generate() {
 	}
 }
 
+func GenerateUpdate() {
+	if f, err := os.Open("fisson_input.json"); err != nil {
+		log.Fatal(err)
+	} else {
+		var m map[string]interface{}
+		decoder := json.NewDecoder(f)
+		if err := decoder.Decode(&m); err != nil {
+			log.Fatal(err)
+		}
+		for k, v := range m {
+			f := v.(map[string]interface{})
+			cmd := bytes.NewBufferString("#---\n")
+			fmt.Fprint(cmd, "fission fn update --name ", k, " --env go --src ", f["src"], " --entrypoint ", f["entry"])
+			fmt.Fprintln(os.Stdout, cmd.String())
+		}
+	}
+}
+
 func main() {
-	Generate()
+	if len(os.Args) != 2 {
+		fmt.Println("Pass an argument. create or update")
+	} else if os.Args[1] == "create" {
+		Generate()
+	} else if os.Args[1] == "update" {
+		GenerateUpdate()
+	}
 }

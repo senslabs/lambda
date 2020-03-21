@@ -10,8 +10,8 @@ import (
 	"github.com/senslabs/alpha/sens/errors"
 	"github.com/senslabs/alpha/sens/httpclient"
 	"github.com/senslabs/alpha/sens/logger"
-	"github.com/senslabs/lambda/sens/fission/response"
 	"github.com/senslabs/lambda/sens/fission/config"
+	"github.com/senslabs/lambda/sens/fission/response"
 )
 
 func duplicateDevice(w http.ResponseWriter, r *http.Request, orgId string, userId string, status string) error {
@@ -22,7 +22,7 @@ func duplicateDevice(w http.ResponseWriter, r *http.Request, orgId string, userI
 	}
 	deviceId := mux.Vars(r)["deviceId"]
 	var device map[string]interface{}
-	url := fmt.Sprintf("%s%s", config.getDatastoreUrl(), "/api/devices/find")
+	url := fmt.Sprintf("%s%s", config.GetDatastoreUrl(), "/api/devices/find")
 	and := httpclient.HttpParams{"DeviceId": {deviceId}}
 	code, err := httpclient.Get(url, and, nil, &device)
 	logger.Debugf("%d, %#v", code, device)
@@ -40,7 +40,7 @@ func duplicateDevice(w http.ResponseWriter, r *http.Request, orgId string, userI
 		if userId != "" {
 			device["UserId"] = userId
 		}
-		url := fmt.Sprintf("%s%s", config.getDatastoreUrl(), "/api/devices/create")
+		url := fmt.Sprintf("%s%s", config.GetDatastoreUrl(), "/api/devices/create")
 		code, _, err := httpclient.PostR(url, and, nil, &device)
 		if err != nil {
 			return httpclient.WriteError(w, code, err)
@@ -51,7 +51,7 @@ func duplicateDevice(w http.ResponseWriter, r *http.Request, orgId string, userI
 
 func CreateDevice(w http.ResponseWriter, r *http.Request) {
 	logger.InitLogger("sens.lambda.CreateDevice")
-	url := fmt.Sprintf("%s%s", config.getDatastoreUrl(), "/api/devices/create")
+	url := fmt.Sprintf("%s%s", config.GetDatastoreUrl(), "/api/devices/create")
 	code, data, err := httpclient.PostR(url, nil, nil, r.Body)
 	logger.Debug(code, string(data))
 	if err != nil {
