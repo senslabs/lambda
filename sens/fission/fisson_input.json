@@ -88,5 +88,35 @@
         "entry": "GetUserDetail",
         "method": "POST",
         "path": "/api/users/{id}/detail"
+    },
+    "create-device": {
+        "src": "src/device/main.go",
+        "entry": "CreateDevice",
+        "method": "POST",
+        "path": "/api/devices/create"
+    },
+    "register-device": {
+        "src": "src/device/main.go",
+        "entry": "RegisterDevice",
+        "method": "POST",
+        "path": "/api/devices/{deviceId}/register"
+    },
+    "unregister-device": {
+        "src": "src/device/main.go",
+        "entry": "UnregisterDevice",
+        "method": "POST",
+        "path": "/api/devices/{deviceId}/unregister"
+    },
+    "pair-device": {
+        "src": "src/device/main.go",
+        "entry": "PairDevice",
+        "method": "POST",
+        "path": "/api/devices/{deviceId}/pair"
+    },
+    "unpair-device": {
+        "src": "src/device/main.go",
+        "entry": "UnpairDevice",
+        "method": "POST",
+        "path": "/api/devices/{deviceId}/unpair"
     }
 }
