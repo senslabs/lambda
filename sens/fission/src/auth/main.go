@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -19,14 +18,6 @@ import (
 type AuthRequestBody struct {
 	Id     string
 	Medium string
-}
-
-func getDatastoreUrl() string {
-	baseUrl := os.Getenv("DATASTORE_BASE_URL")
-	if baseUrl == "" {
-		return "http://datastore.senslabs.me"
-	}
-	return baseUrl
 }
 
 func RequestOtp(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +59,7 @@ func VerifyOtp(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateAuth(w http.ResponseWriter, r *http.Request) {
-	url := fmt.Sprintf("%s/api/auths/create", getDatastoreUrl())
+	url := fmt.Sprintf("%s/api/auths/create", config.getDatastoreUrl())
 	code, data, err := httpclient.PostR(url, nil, nil, r.Body)
 	logger.Debug(code, data)
 	if err != nil {
@@ -82,7 +73,7 @@ func CreateAuth(w http.ResponseWriter, r *http.Request) {
 
 //Create a user of any category
 func createUser(w http.ResponseWriter, r *http.Request, category string) {
-	url := fmt.Sprintf("%s/api/%ss/create", getDatastoreUrl(), strings.ToLower(category))
+	url := fmt.Sprintf("%s/api/%ss/create", config.getDatastoreUrl(), strings.ToLower(category))
 	code, data, err := httpclient.PostR(url, nil, nil, r.Body)
 	logger.Debug(code, data)
 	if err != nil {
@@ -99,7 +90,7 @@ func createUser(w http.ResponseWriter, r *http.Request, category string) {
 
 //Map that category user to auth
 func mapUserAuth(w http.ResponseWriter, r *http.Request, category string, categoryId string) error {
-	url := fmt.Sprintf("%s/api/%s-auths/create", getDatastoreUrl(), strings.ToLower(category))
+	url := fmt.Sprintf("%s/api/%s-auths/create", config.getDatastoreUrl(), strings.ToLower(category))
 	authId := r.Header.Get("x-sens-auth-id")
 	body := fmt.Sprintf(`{"%sId": "%s", "AuthId":"%s"}`, category, categoryId, authId)
 	code, data, err := httpclient.PostR(url, nil, nil, body)
@@ -113,7 +104,7 @@ func mapUserAuth(w http.ResponseWriter, r *http.Request, category string, catego
 
 //Get the category user details
 func getUserDetail(w http.ResponseWriter, r *http.Request, category string) {
-	url := fmt.Sprintf("%s/api/%s-details/create", getDatastoreUrl(), strings.ToLower(category))
+	url := fmt.Sprintf("%s/api/%s-details/create", config.getDatastoreUrl(), strings.ToLower(category))
 	code, data, err := httpclient.GetR(url, nil, nil)
 	logger.Debugf("Code: %d, Data: %v", code, data)
 	if err != nil {
@@ -200,7 +191,7 @@ func verifyOtp(reqBody VerifyRequestBody) (bool, error) {
 
 func LoadAuth(id string) ([]byte, error) {
 	or := httpclient.HttpParams{"Mobile": {id}, "Email": {id}, "Social": {id}}
-	url := fmt.Sprintf("%s/api/auths/find", getDatastoreUrl())
+	url := fmt.Sprintf("%s/api/auths/find", config.getDatastoreUrl())
 	code, auths, err := httpclient.GetR(url, or, nil)
 	logger.Debugf("%d, %s", code, auths)
 	if err != nil || code != http.StatusOK {

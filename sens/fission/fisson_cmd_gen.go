@@ -19,9 +19,10 @@ func Generate() {
 		}
 		for k, v := range m {
 			f := v.(map[string]interface{})
-			cmd := bytes.NewBufferString("---\nfission fn create --name ")
-			fmt.Fprintln(cmd, k, " --env go --src ", f["src"], " --entrypoint ", f["entry"])
-			fmt.Fprint(cmd, "fission route create --name ", k, " --method ", f["method"], " --url ", f["path"], " --function ", k, " --createingress")
+			cmd := bytes.NewBufferString("#---")
+			fmt.Fprintln(cmd, "\nfission fn delete --name ", k)
+			fmt.Fprintln(cmd, "fission fn create --name ", k, " --env go --src ", f["src"], " --entrypoint ", f["entry"])
+			fmt.Fprint(cmd, "fission route create --name ", k, " --method ", f["method"], " --url ", f["path"], " --function ", k)
 			fmt.Fprintln(os.Stdout, cmd.String())
 		}
 	}
