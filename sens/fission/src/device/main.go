@@ -11,6 +11,7 @@ import (
 	"github.com/senslabs/alpha/sens/httpclient"
 	"github.com/senslabs/alpha/sens/logger"
 	"github.com/senslabs/lambda/sens/fission/response"
+	"github.com/senslabs/lambda/sens/fission/config"
 )
 
 func duplicateDevice(w http.ResponseWriter, r *http.Request, orgId string, userId string, status string) error {

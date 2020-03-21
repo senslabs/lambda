@@ -13,6 +13,7 @@ import (
 	"github.com/senslabs/alpha/sens/logger"
 	"github.com/senslabs/alpha/sens/types"
 	"github.com/senslabs/lambda/sens/fission/response"
+	"github.com/senslabs/lambda/sens/fission/config"
 )
 
 type AuthRequestBody struct {

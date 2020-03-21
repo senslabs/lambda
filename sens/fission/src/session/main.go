@@ -13,6 +13,7 @@ import (
 
 	"github.com/senslabs/lambda/sens/fission/request"
 	"github.com/senslabs/lambda/sens/fission/response"
+	"github.com/senslabs/lambda/sens/fission/config"
 )
 
 type Session struct {
