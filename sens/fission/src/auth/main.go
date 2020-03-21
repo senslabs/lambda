@@ -22,6 +22,7 @@ type AuthRequestBody struct {
 }
 
 func RequestOtp(w http.ResponseWriter, r *http.Request) {
+	logger.InitLogger("sens.lambda.RequestOtp")
 	var reqBody AuthRequestBody
 	if err := types.JsonUnmarshalFromReader(r.Body, &reqBody); err != nil {
 		logger.Error(err)
@@ -43,6 +44,7 @@ type VerifyRequestBody struct {
 }
 
 func VerifyOtp(w http.ResponseWriter, r *http.Request) {
+	logger.InitLogger("sens.lambda.VerifyOtp")
 	var reqBody VerifyRequestBody
 	if err := types.JsonUnmarshalFromReader(r.Body, &reqBody); err != nil {
 		logger.Error(err)
@@ -60,6 +62,7 @@ func VerifyOtp(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateAuth(w http.ResponseWriter, r *http.Request) {
+	logger.InitLogger("sens.lambda.CreateAuth")
 	url := fmt.Sprintf("%s/api/auths/create", config.GetDatastoreUrl())
 	code, data, err := httpclient.PostR(url, nil, nil, r.Body)
 	logger.Debug(code, data)
@@ -73,21 +76,20 @@ func CreateAuth(w http.ResponseWriter, r *http.Request) {
 }
 
 //Create a user of any category
-func createUser(w http.ResponseWriter, r *http.Request, category string) {
+func createUser(w http.ResponseWriter, r *http.Request, category string) error {
 	url := fmt.Sprintf("%s/api/%ss/create", config.GetDatastoreUrl(), strings.ToLower(category))
 	code, data, err := httpclient.PostR(url, nil, nil, r.Body)
 	logger.Debug(code, data)
-	if err != nil {
-		logger.Error(err)
-		response.WriteError(w, code, err)
-	} else if err := mapUserAuth(w, r, category, string(data)); err != nil {
-		logger.Error(err)
-		response.WriteError(w, code, err)
-	} else {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, data)
-	}
+	return httpclient.WriteError(w, code, err)
 }
+
+// else if err := mapUserAuth(w, r, category, string(data)); err != nil {
+// 	logger.Error(err)
+// 	response.WriteError(w, code, err)
+// } else {
+// 	w.WriteHeader(http.StatusOK)
+// 	fmt.Fprintln(w, data)
+// }
 
 //Map that category user to auth
 func mapUserAuth(w http.ResponseWriter, r *http.Request, category string, categoryId string) error {
@@ -105,7 +107,7 @@ func mapUserAuth(w http.ResponseWriter, r *http.Request, category string, catego
 
 //Get the category user details
 func getUserDetail(w http.ResponseWriter, r *http.Request, category string) {
-	url := fmt.Sprintf("%s/api/%s-details/create", config.GetDatastoreUrl(), strings.ToLower(category))
+	url := fmt.Sprintf("%s/api/%s-detail-views/create", config.GetDatastoreUrl(), strings.ToLower(category))
 	code, data, err := httpclient.GetR(url, nil, nil)
 	logger.Debugf("Code: %d, Data: %v", code, data)
 	if err != nil {
@@ -118,26 +120,32 @@ func getUserDetail(w http.ResponseWriter, r *http.Request, category string) {
 }
 
 func GetOrgDetail(w http.ResponseWriter, r *http.Request) {
+	logger.InitLogger("sens.lambda.GetOrgDetail")
 	getUserDetail(w, r, "Org")
 }
 
 func GetOpDetail(w http.ResponseWriter, r *http.Request) {
+	logger.InitLogger("sens.lambda.GetOpDetail")
 	getUserDetail(w, r, "Op")
 }
 
 func GetUserDetail(w http.ResponseWriter, r *http.Request) {
+	logger.InitLogger("sens.lambda.GetUserDetail")
 	getUserDetail(w, r, "User")
 }
 
 func CreateOrg(w http.ResponseWriter, r *http.Request) {
+	logger.InitLogger("sens.lambda.CreateOrg")
 	createUser(w, r, "Org")
 }
 
 func CreateOp(w http.ResponseWriter, r *http.Request) {
+	logger.InitLogger("sens.lambda.CreateOp")
 	createUser(w, r, "Op")
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
+	logger.InitLogger("sens.lambda.CreateUser")
 	createUser(w, r, "User")
 }
 

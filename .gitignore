@@ -3,3 +3,4 @@ sens/fission/.DS_Store
 sens/fission/src/src
 sens/.DS_Store
 sens/fission/lambda_builder.sh
+sens/fission/src/auth/auth
