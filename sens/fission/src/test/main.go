@@ -41,7 +41,7 @@ func TestDatastore(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "Error:", err)
 		} else {
 			code, data, err := httpclient.PostR(url, nil, nil, b)
-			fmt.Fprintln(w, code, ",", string(data), "Error:", err)
+			fmt.Fprintln(w, "Http status code:", code, string(data), "Error:", err)
 		}
 	}
 }
