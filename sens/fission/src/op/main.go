@@ -12,8 +12,8 @@ import (
 )
 
 func ListOpDevices(w http.ResponseWriter, r *http.Request) {
-	logger.InitLogger("sens.lambda.ListOrgDevices")
-	orgId := request.GetHeaderValue(r, "x-sens-org-id")
+	logger.InitLogger("sens.lambda.ListOpDevices")
+	opId := request.GetSensHeaderValue(r, "Op-id")
 	and := httpclient.HttpParams{"and": {"OrgId^" + orgId, "Status^REGISTERED"}, "limit": {"100"}}
 	url := fmt.Sprintf("%s/api/devices/find", config.GetDatastoreUrl())
 	code, data, err := httpclient.GetR(url, and, nil)
