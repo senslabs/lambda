@@ -80,14 +80,14 @@
     "list-org-devices": {
         "src": "src/org/main.go",
         "entry": "ListOrgDevices",
-        "method": "POST",
-        "path": "/api/devices/find"
+        "method": "GET",
+        "path": "/api/devices/list"
     },
     "list-org-users": {
         "src": "src/org/main.go",
         "entry": "ListOrgUsers",
-        "method": "POST",
-        "path": "/api/users/find"
+        "method": "GET",
+        "path": "/api/users/list"
     },
     "get-op-detail": {
         "src": "src/auth/main.go",
