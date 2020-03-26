@@ -394,12 +394,16 @@ func Bod(t time.Time) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, t.Location())
 }
 
-func getDayStart(timestamp int64, timezone string) int64 {
-	timezoneObj, _ := time.LoadLocation(timezone)
-	timestampTime := time.Unix(timestamp, 0).In(timezoneObj)
-	startOfDay := Bod(timestampTime)
-	startOfDayUnix := startOfDay.Unix()
-	return startOfDayUnix
+func getDayStart(timestamp int64, timezone string) (int64, error) {
+	if timezoneObj, err := time.LoadLocation(timezone); err != nil {
+		logger.Error(err)
+		return 0, err
+	} else {
+		timestampTime := time.Unix(timestamp, 0).In(timezoneObj)
+		startOfDay := Bod(timestampTime)
+		startOfDayUnix := startOfDay.Unix()
+		return startOfDayUnix, nil
+	}
 }
 
 func getFromDataStore(URL string) []byte {
@@ -554,6 +558,9 @@ func ListSessions(w http.ResponseWriter, r *http.Request) {
 func GetGeneralSummary(w http.ResponseWriter, r *http.Request) {
 	os.Setenv("FILE_STORE", "fluentd")
 	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	logger.InitLogger("sens.lambda.ListSessions")
+
 	// get days from the url query
 	// take current date and then subtract the number of days to get the started_at date
 	sDays := request.GetQueryParam(r, "days")
@@ -587,19 +594,23 @@ func GetGeneralSummary(w http.ResponseWriter, r *http.Request) {
 		for _, session := range userSessionsData {
 			currentSessionType := session.Type
 			sessionEndTime := session.EndedAt
-			sessionKey := getDayStart(sessionEndTime, "Asia/Kolkata")
-			var currentDateSessionSummary SessionsSummary
-			if sessionSummary, ok := generatedSummary[sessionKey]; ok {
-				currentDateSessionSummary = sessionSummary
+			if sessionKey, err := getDayStart(sessionEndTime, "Asia/Kolkata"); err != nil {
+				logger.Error(err)
+				response.WriteError(w, http.StatusInternalServerError, err)
 			} else {
-				currentDateSessionSummary = SessionsSummary{}
+				var currentDateSessionSummary SessionsSummary
+				if sessionSummary, ok := generatedSummary[sessionKey]; ok {
+					currentDateSessionSummary = sessionSummary
+				} else {
+					currentDateSessionSummary = SessionsSummary{}
+				}
+				if currentSessionType == "Sleep" {
+					currentDateSessionSummary.Sleeps++
+				} else if currentSessionType == "Meditation" {
+					currentDateSessionSummary.Meditations++
+				}
+				generatedSummary[sessionKey] = currentDateSessionSummary
 			}
-			if currentSessionType == "Sleep" {
-				currentDateSessionSummary.Sleeps++
-			} else if currentSessionType == "Meditation" {
-				currentDateSessionSummary.Meditations++
-			}
-			generatedSummary[sessionKey] = currentDateSessionSummary
 		}
 	}
 

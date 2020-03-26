@@ -20,7 +20,7 @@ type Device struct {
 	Name       string      `json:",omitempty"`
 	OrgId      string      `json:",omitempty"`
 	UserId     string      `json:",omitempty"`
-	CreatedAt  time.Time   `json:",omitempty"`
+	CreatedAt  int64       `json:",omitempty"`
 	Status     string      `json:",omitempty"`
 	Properties interface{} `json:",omitempty"`
 }
@@ -42,7 +42,7 @@ func duplicateDevice(w http.ResponseWriter, r *http.Request, orgId string, userI
 		if err != nil {
 			return httpclient.WriteError(w, code, err)
 		} else {
-			device.CreatedAt = time.Now()
+			device.CreatedAt = time.Now().Unix()
 			if status != "" {
 				device.Status = status
 			}
