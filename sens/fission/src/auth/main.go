@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -46,19 +47,22 @@ type VerifyRequestBody struct {
 }
 
 func VerifyOtp(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	os.Setenv("LOG_LEVEL", "DEBUG")
 	logger.InitLogger("sens.lambda.VerifyOtp")
 	var reqBody VerifyRequestBody
 	if err := types.JsonUnmarshalFromReader(r.Body, &reqBody); err != nil {
 		response.WriteError(w, http.StatusInternalServerError, err)
-	} else if verified, err := verifyOtp(reqBody); err != nil || !verified {
-		logger.Error("Verified:", verified, err)
+	} else if code, err := verifyOtp(reqBody); err != nil || code != http.StatusOK {
+		logger.Error("Code", code, err)
 		response.WriteError(w, http.StatusInternalServerError, err)
 	} else if auth, err := BuildAuth(r, reqBody.Id); err != nil {
 		logger.Error(err)
 		response.WriteError(w, http.StatusInternalServerError, err)
 	} else {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, auth)
+		fmt.Fprintf(w, "%s", auth)
 	}
 }
 
@@ -176,25 +180,29 @@ type TwilioVerifyOtpResponse struct {
 	Status string `json:"status"`
 }
 
-func verifyOtp(reqBody VerifyRequestBody) (bool, error) {
+func verifyOtp(reqBody VerifyRequestBody) (int, error) {
 	body := fmt.Sprintf("To=%s&Code=%s", url.QueryEscape(reqBody.Id), reqBody.ConfirmationCode)
 	url := fmt.Sprintf("https://verify.twilio.com/v2/Services/%s/VerificationCheck", reqBody.Session)
 	var twilioResponse TwilioVerifyOtpResponse
-	code, err := httpclient.Post(url, nil, httpclient.HttpParams{
+	code, data, err := httpclient.PostR(url, nil, httpclient.HttpParams{
 		"Authorization": {"Basic QUM2MmFlOWU0N2I2MTI2M2YyZDQwYzdjYjhjMzMyNzU4OTo4MTg4MGNhMTBmMjMxMGUxNjdlZGI1YTRmZGVjMDUxMg=="},
 		"Content-Type":  {"application/x-www-form-urlencoded"},
-	}, []byte(body), &twilioResponse)
-	logger.Debugf("%d, %v", code, twilioResponse)
+	}, []byte(body))
+	logger.Debugf("%d, %#v", code, data)
 	if err != nil {
 		logger.Error(err)
-		return false, err
+		return code, err
 	}
-	if twilioResponse.Status != "approved" {
+	if code == http.StatusOK {
+		err = json.Unmarshal(data, &twilioResponse)
+	}
+	if err != nil || code != http.StatusOK || twilioResponse.Status != "approved" {
 		logger.Error("Twilio confrmation code entered does not seem to be correct")
-		return false, errors.New(0, "Twilio confrmation code entered does not seem to be correct")
+		return code, errors.New(0, "Twilio confrmation code entered does not seem to be correct")
 	}
-	return true, nil
+	return code, nil
 }
+
 func buildAuth(r *http.Request, auths []byte, id string) ([]byte, error) {
 	var subs []map[string]interface{}
 	if err := json.Unmarshal(auths, &subs); err != nil {
@@ -207,7 +215,7 @@ func buildAuth(r *http.Request, auths []byte, id string) ([]byte, error) {
 }
 
 func BuildAuth(r *http.Request, id string) ([]byte, error) {
-	or := httpclient.HttpParams{"Mobile": {id}, "Email": {id}, "Social": {id}}
+	or := httpclient.HttpParams{"Mobile": {id}, "Email": {id}, "Social": {id}, "limit": {"1"}}
 	url := fmt.Sprintf("%s/api/auths/find", config.GetDatastoreUrl())
 	code, auths, err := httpclient.GetR(url, or, nil)
 	logger.Debugf("%d, %s", code, auths)

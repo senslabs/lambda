@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/senslabs/alpha/sens/httpclient"
 	"github.com/senslabs/alpha/sens/logger"
@@ -12,12 +13,15 @@ import (
 )
 
 func ListOrgDevices(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	os.Setenv("LOG_LEVEL", "DEBUG")
 	logger.InitLogger("sens.lambda.ListOrgDevices")
-	orgId := request.GetSensHeaderValue(r, "org-id")
+	orgId := request.GetSensHeaderValue(r, "Org-Id")
 	and := httpclient.HttpParams{"and": {"OrgId^" + orgId, "Status^REGISTERED"}, "limit": {"100"}}
 	url := fmt.Sprintf("%s/api/devices/find", config.GetDatastoreUrl())
 	code, data, err := httpclient.GetR(url, and, nil)
-	logger.Debug(code, data)
+	logger.Debugf("%d, %#v", code, data)
 	if err != nil {
 		logger.Error(err)
 		response.WriteError(w, code, err)
@@ -28,7 +32,7 @@ func ListOrgDevices(w http.ResponseWriter, r *http.Request) {
 
 func ListOrgUsers(w http.ResponseWriter, r *http.Request) {
 	logger.InitLogger("sens.lambda.ListOrgUsers")
-	orgId := request.GetSensHeaderValue(r, "org-id")
+	orgId := request.GetHeaderValue(r, "x-sens-org-id")
 	and := httpclient.HttpParams{"and": {"OrgId^" + orgId}, "limit": {"100"}}
 	url := fmt.Sprintf("%s/api/users/find", config.GetDatastoreUrl())
 	code, data, err := httpclient.GetR(url, and, nil)

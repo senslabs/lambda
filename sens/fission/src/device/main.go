@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/senslabs/alpha/sens/errors"
@@ -91,6 +92,9 @@ const (
 )
 
 func RegisterDevice(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	os.Setenv("LOG_LEVEL", "DEBUG")
 	logger.InitLogger("sens.lambda.RegisterDevice")
 	var body DeviceUpdateBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
