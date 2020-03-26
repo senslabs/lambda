@@ -2,30 +2,60 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 	"time"
 
+	"github.com/senslabs/alpha/sens/logger"
+
+	"github.com/senslabs/alpha/sens/errors"
+	"github.com/senslabs/alpha/sens/httpclient"
 	"github.com/senslabs/lambda/sens/fission/config"
 	"github.com/senslabs/lambda/sens/fission/request"
 	"github.com/senslabs/lambda/sens/fission/response"
 )
 
 type Session struct {
+	Id     string `json:"Id"`
+	UserId struct {
+		Value string `json:"String"`
+		Valid bool   `json:"valid"`
+	} `json:"UserId"`
+	Name struct {
+		Value string `json:"String"`
+		Valid bool   `json:"valid"`
+	} `json:"Name"`
+	Type struct {
+		Value string `json:"String"`
+		Valid bool   `json:"valid"`
+	} `json:"Type"`
+	StartTime struct {
+		Value int64 `json:"Int64"`
+		Valid bool  `json:"valid"`
+	} `json:"StartedAt"`
+	EndTime struct {
+		Value int64 `json:"Int64"`
+		Valid bool  `json:"valid"`
+	} `json:"EndedAt"`
+}
+
+type Sessions []Session
+
+type SessionList struct {
 	Id        string `json:"Id"`
 	UserId    string `json:"UserId"`
 	Name      string `json:"Name"`
 	Type      string `json:"Type"`
-	StartTime int64  `json:"StartTime"`
-	EndTime   int64  `json:"EndTime"`
+	StartedAt int64  `json:"StartedAt"`
+	EndedAt   int64  `json:"EndedAt"`
 }
 
-type Sessions []Session
+type SessionLists []SessionList
 
 type SessionProperty struct {
 	SessionId string `json:"SessionId"`
@@ -36,10 +66,10 @@ type SessionProperty struct {
 type SessionProperties []SessionProperty
 
 type SessionRecord struct {
-	UserId    string `json:"UserId"`
-	Name      string `json:"Name"`
-	Timestamp int64  `json:"Timestamp"`
-	Value     string `json:"Value"`
+	UserId    string  `json:"UserId"`
+	Name      string  `json:"Name"`
+	Timestamp int64   `json:"Timestamp"`
+	Value     float64 `json:"Value"`
 }
 
 type SessionRecords []SessionRecord
@@ -125,7 +155,7 @@ type SessionsSummary struct {
 func fetchSessionProperties(sessionId string, requiredSessionProperties map[string]int64) map[string]int64 {
 	// Fetching session properties
 	for key := range requiredSessionProperties {
-		sessionPropertiesUrl := fmt.Sprintf("%v/api/sessions-properties/find/?and=sessionId:%v&and=name:%v&limit=1", config.GetDatastoreUrl(), sessionId, key)
+		sessionPropertiesUrl := fmt.Sprintf("%v/api/session-properties/find?and=SessionId^%v&and=Name^%v&limit=1", config.GetDatastoreUrl(), sessionId, key)
 		sessionPropertiesResponseData := getFromDataStore(sessionPropertiesUrl)
 
 		var sessionPropertiesData SessionProperties
@@ -134,9 +164,16 @@ func fetchSessionProperties(sessionId string, requiredSessionProperties map[stri
 			log.Println("Error unmarshalling response data to session properties")
 		}
 
-		sValue := sessionPropertiesData[0].Value
-		value, _ := strconv.ParseInt(sValue, 10, 64)
-		requiredSessionProperties[key] = value
+		if len(sessionPropertiesData) > 0 {
+			sValue := sessionPropertiesData[0].Value
+			var value int64
+			if key == "HeartRate" || key == "BreathRate" || key == "Recovery" || key == "Score" {
+				value, _ = strconv.ParseInt(sValue, 10, 64)
+			} else if key == "WakeupTime" || key == "SleepTime" || key == "SunriseTime" {
+				value, _ = strconv.ParseInt(sValue, 10, 64)
+			}
+			requiredSessionProperties[key] = value
+		}
 	}
 
 	return requiredSessionProperties
@@ -145,7 +182,7 @@ func fetchSessionProperties(sessionId string, requiredSessionProperties map[stri
 func fetchSessionRecords(sessionUserId string, sessionStartTime int64, sessionEndTime int64, requiredSessionRecords *map[string]TimeSeriesData) {
 	// Fetch records
 	for key := range *requiredSessionRecords {
-		sessionRecordsUrl := fmt.Sprintf("%v/api/sessions-records/find/?and=name:%v&and=name:%v&range:%v:%v", config.GetDatastoreUrl(), key, sessionUserId, sessionStartTime, sessionEndTime)
+		sessionRecordsUrl := fmt.Sprintf("%v/api/session-records/find?and=Name^%v&and=UserId^%v&span=Timestamp^%v^%v&limit=10000000", config.GetDatastoreUrl(), key, sessionUserId, sessionStartTime, sessionEndTime)
 		sessionRecordsReponseData := getFromDataStore(sessionRecordsUrl)
 		var sessionRecordsData SessionRecords
 		json.Unmarshal(sessionRecordsReponseData, &sessionRecordsData)
@@ -154,29 +191,17 @@ func fetchSessionRecords(sessionUserId string, sessionStartTime int64, sessionEn
 			timestamp := value.Timestamp
 			var newEvent TimeSeries
 			newEvent.Time = timestamp
-			if key == "HeartRate" || key == "BreathRate" || key == "Stress" || key == "Recovery" {
-				value, _ := strconv.ParseFloat(value.Value, 10)
-				newEvent.Value = value
+			if key == "HeartRate" || key == "BreathRate" || key == "Stress" || key == "Recovery" || key == "StftRatio" {
+				newEvent.Value = value.Value
 			} else if key == "Stage" {
-				value, _ := strconv.ParseInt(value.Value, 10, 64)
-				newEvent.Value = value
+				newEvent.Value = int64(value.Value)
 			}
 			(*requiredSessionRecords)[key] = append((*requiredSessionRecords)[key], newEvent)
 		}
 	}
 }
 
-func getUserSessions(r *http.Request) Sessions {
-	//sessionId := urlQueryParams.Get("id")
-	sessionType := request.GetQueryParam(r, "type")
-	sLimit := request.GetQueryParam(r, "limit")
-	var limit int64
-	if len(sLimit) != 0 {
-		limit, _ = strconv.ParseInt(sLimit, 10, 64)
-	} else {
-		limit = 1
-	}
-
+func getUserSessions(r *http.Request, sessionType string, limit int64) SessionLists {
 	//sFrom := urlQueryParams.Get("from")
 	//from, _ := strconv.ParseInt(sFrom, 10, 64)
 	//sTo := urlQueryParams.Get("to")
@@ -184,10 +209,10 @@ func getUserSessions(r *http.Request) Sessions {
 
 	userIdList := getUserList(r)
 
-	var userSessionsData Sessions
+	var userSessionsData SessionLists
 
 	for _, currentUserId := range userIdList {
-		url := fmt.Sprintf("%v/api/sessions/find/?and=userId:%v&limit=%v&type=%v", config.GetDatastoreUrl(), currentUserId, limit, sessionType)
+		url := fmt.Sprintf("%v/api/sessions/find?and=UserId^%v&limit=%v&and=Type^%v", config.GetDatastoreUrl(), currentUserId, limit, sessionType)
 		userSessionResponseData := getFromDataStore(url)
 		json.Unmarshal(userSessionResponseData, &userSessionsData)
 	}
@@ -206,9 +231,9 @@ func getSessionSnapshot(sessionId string, sessionType string) SessionSnapshot {
 	if err != nil {
 		log.Println("Error unmarshalling response data to sleep data")
 	}
-	sessionUserId := sessionData.UserId
-	sessionStartTime := sessionData.StartTime
-	sessionEndTime := sessionData.EndTime
+	sessionUserId := sessionData.UserId.Value
+	sessionStartTime := sessionData.StartTime.Value
+	sessionEndTime := sessionData.EndTime.Value
 
 	requiredSessionProperties := map[string]int64{
 		"Recovery": 0,
@@ -243,9 +268,9 @@ func getSessionSnapshot(sessionId string, sessionType string) SessionSnapshot {
 }
 
 func createSessionSnapshotData(sessionData Session, requiredSessionProperties map[string]int64, requiredSessionRecords map[string]TimeSeriesData) SessionSnapshot {
-	sessionSleepTime := sessionData.StartTime
-	sessionWakeupTime := sessionData.EndTime
-	sessionType := sessionData.Type
+	sessionSleepTime := sessionData.StartTime.Value
+	sessionWakeupTime := sessionData.EndTime.Value
+	sessionType := sessionData.Type.Value
 
 	if sessionType == "Sleep" {
 		sessionSleepTime = requiredSessionProperties["SleepTime"]
@@ -267,16 +292,16 @@ func createSessionSnapshotData(sessionData Session, requiredSessionProperties ma
 	sessionSnapshot.Score = sessionScore
 	sessionSnapshot.BreathRate = sessionBreathRateAverage
 	sessionSnapshot.HeartRate = sessionHeartRateAverage
-	sessionSnapshot.LastSync = sessionData.EndTime
+	sessionSnapshot.LastSync = sessionData.EndTime.Value
 	sessionSnapshot.Recovery = sessionRecovery
 	sessionSnapshot.Id = sessionData.Id
-	sessionSnapshot.UserId = sessionData.UserId
+	sessionSnapshot.UserId = sessionData.UserId.Value
 	if sessionType == "Sleep" {
 		sessionSnapshot.StartTime = sessionSleepTime
 		sessionSnapshot.EndTime = sessionWakeupTime
 	} else {
-		sessionSnapshot.StartTime = sessionData.StartTime
-		sessionSnapshot.EndTime = sessionData.EndTime
+		sessionSnapshot.StartTime = sessionData.StartTime.Value
+		sessionSnapshot.EndTime = sessionData.EndTime.Value
 	}
 
 	return sessionSnapshot
@@ -292,7 +317,12 @@ func getVitalsAverage(data TimeSeriesData, sleepTime int64, wakeupTime int64) in
 			vitalsBetweenSleepTimeCounter++
 		}
 	}
-	averageVital := int64(vitalsBetweenSleepTime / vitalsBetweenSleepTimeCounter)
+	var averageVital int64
+	if vitalsBetweenSleepTimeCounter > 0 {
+		averageVital = int64(vitalsBetweenSleepTime / vitalsBetweenSleepTimeCounter)
+	} else {
+		averageVital = 0
+	}
 	return averageVital
 }
 
@@ -308,7 +338,7 @@ func getTotalDurationFromStages(stages TimeSeriesData) int64 {
 			eventTimeDiff = stage.Time - previousTime
 		}
 		if stage.Value != 4 {
-			sleepStageCounter += 1
+			sleepStageCounter++
 		}
 	}
 	sessionSleepDuration = sleepStageCounter * eventTimeDiff
@@ -318,9 +348,9 @@ func getTotalDurationFromStages(stages TimeSeriesData) int64 {
 func getUserList(r *http.Request) []string {
 	var userIdList []string
 
-	orgId := request.GetHeaderValue(r, "org-id")
-	opId := request.GetHeaderValue(r, "op-id")
-	userId := request.GetHeaderValue(r, "user-id")
+	orgId := r.Header.Get("X-Sens-Org-Id")
+	opId := r.Header.Get("X-Sens-Op-Id")
+	userId := r.Header.Get("X-Sens-User-Id")
 
 	if len(orgId) != 0 {
 		// fetch users under this organization id
@@ -339,7 +369,7 @@ func getUserList(r *http.Request) []string {
 }
 
 func getSessionData(sessionId string) Session {
-	sessionUrl := fmt.Sprintf("%v/api/sessions/get/%v", config.GetDatastoreUrl(), sessionId)
+	sessionUrl := fmt.Sprintf("%v/api/sessions/%v/get", config.GetDatastoreUrl(), sessionId)
 
 	sessionResponseData := getFromDataStore(sessionUrl)
 
@@ -347,7 +377,7 @@ func getSessionData(sessionId string) Session {
 	err := json.Unmarshal(sessionResponseData, &sessionData)
 
 	if err != nil {
-		log.Println("Error unmarshalling response data to sleep data")
+		log.Printf("Error unmarshalling response data to sleep data : %v", err)
 	}
 
 	return sessionData
@@ -355,7 +385,7 @@ func getSessionData(sessionId string) Session {
 
 func getOrganizationUsers(orgId string) []string {
 	var orgUsers []string
-	url := fmt.Sprintf("%v/api/org-users/find/?and=orgId:%v&limit=10000", config.GetDatastoreUrl(), orgId)
+	url := fmt.Sprintf("%v/api/org-users/find?and=OrgId^%v&limit=10000", config.GetDatastoreUrl(), orgId)
 	organizationUsersResponseData := getFromDataStore(url)
 	var organizationUserData OrganizationUsers
 
@@ -373,7 +403,7 @@ func getOrganizationUsers(orgId string) []string {
 
 func getOperatorUsers(orgId string) []string {
 	var opUsers []string
-	url := fmt.Sprintf("%v/api/op-users/find/?and=orgId:%v&limit=10000", config.GetDatastoreUrl(), orgId)
+	url := fmt.Sprintf("%v/api/op-users/find?and=OrgId^%v&limit=10000", config.GetDatastoreUrl(), orgId)
 	operatorUsersResponseData := getFromDataStore(url)
 	var operatorUserData OperatorUsers
 	err := json.Unmarshal(operatorUsersResponseData, &operatorUserData)
@@ -407,9 +437,7 @@ func getFromDataStore(URL string) []byte {
 	if err != nil {
 		log.Panicf("Error creating a new request for fetching %v", URL)
 	}
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Panic("Error performing a request")
@@ -423,6 +451,9 @@ func getFromDataStore(URL string) []byte {
 }
 
 func GetSession(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("FILE_STORE", "fluentd")
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	logger.InitLogger("sens.lambda.GetSession")
 	// Get the sessionId from the request body
 	// Fetch session details using the datastore link and type as sleep
 	// Using the Start Time and End Time, fetch the following
@@ -432,8 +463,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 	// Create Sleep Map Data
 	// Return Sleep Map Data through Response
 	sessionId := request.GetPathParam(r, "Id")
-
-	sessionUrl := fmt.Sprintf("%v/api/sessions/get/%v", config.GetDatastoreUrl(), sessionId)
+	sessionUrl := fmt.Sprintf("%v/api/sessions/%v/get", config.GetDatastoreUrl(), sessionId)
 
 	sessionResponseData := getFromDataStore(sessionUrl)
 
@@ -443,9 +473,9 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error unmarshalling response data to sleep data")
 	}
-	sessionUserId := sessionData.UserId
-	sessionStartTime := sessionData.StartTime
-	sessionEndTime := sessionData.EndTime
+	sessionUserId := sessionData.UserId.Value
+	sessionStartTime := sessionData.StartTime.Value
+	sessionEndTime := sessionData.EndTime.Value
 
 	requiredSessionProperties := map[string]int64{
 		"Recovery":           0,
@@ -511,6 +541,9 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func ListSessions(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("FILE_STORE", "fluentd")
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	logger.InitLogger("sens.lambda.ListSessions")
 	// Get the sessionId from the request body
 	// Fetch session details using the datastore link and type as sleep
 	// A function which fetches the following for the session
@@ -520,32 +553,62 @@ func ListSessions(w http.ResponseWriter, r *http.Request) {
 	// 4. Breath Rate
 	// 5. Session Duration
 	// 6. Recovery Value
+	//sessionId := urlQueryParams.Get("id")
+	sessionType := request.GetQueryParam(r, "type")
+	if len(sessionType) == 0 {
+		httpclient.WriteError(w, http.StatusBadRequest, errors.New(http.StatusBadRequest, "Type not passed with request"))
+		return
+	} else {
+		var limit int64
+		sLimit := request.GetQueryParam(r, "limit")
+		if len(sLimit) != 0 {
+			limit, _ = strconv.ParseInt(sLimit, 10, 64)
+		} else {
+			limit = 1
+		}
 
-	userSessionsData := getUserSessions(r)
+		userSessionsData := getUserSessions(r, sessionType, limit)
 
-	sessionsSnapshots := make(map[string]SessionSnapshots, 0)
+		sessionsSnapshots := make(map[string]SessionSnapshots, 0)
 
-	for _, currentSession := range userSessionsData {
-		currentSessionId := currentSession.Id
-		currentUserId := currentSession.UserId
-		currentSessionType := currentSession.Type
-		sessionSnapshotData := getSessionSnapshot(currentSessionId, currentSessionType)
-		sessionsSnapshots[currentUserId] = append(sessionsSnapshots[currentUserId], sessionSnapshotData)
+		for _, currentSession := range userSessionsData {
+			currentSessionId := currentSession.Id
+			currentUserId := currentSession.UserId
+			currentSessionType := currentSession.Type
+			sessionSnapshotData := getSessionSnapshot(currentSessionId, currentSessionType)
+			if sessionSnapshotData.EndTime != 0 {
+				sessionsSnapshots[currentUserId] = append(sessionsSnapshots[currentUserId], sessionSnapshotData)
+			}
+		}
+
+		responseData := map[string]interface{}{
+			"data": sessionsSnapshots,
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+
+		json.NewEncoder(w).Encode(responseData)
 	}
-
-	responseData := map[string]interface{}{
-		"data": sessionsSnapshots,
-	}
-
-	json.NewEncoder(w).Encode(responseData)
 }
 
 func GetGeneralSummary(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("FILE_STORE", "fluentd")
+	os.Setenv("LOG_LEVEL", "DEBUG")
 	// get days from the url query
 	// take current date and then subtract the number of days to get the started_at date
 	sDays := request.GetQueryParam(r, "days")
+	if len(sDays) == 0 {
+		http.Error(w, "Days not passed along with request", http.StatusBadRequest)
+		return
+	}
 	days, _ := strconv.ParseInt(sDays, 10, 64)
-	endDate := time.Now().Unix()
+	sStartDate := request.GetQueryParam(r, "start")
+	var endDate int64
+	if len(sStartDate) != 0 {
+		endDate, _ = strconv.ParseInt(sStartDate, 10, 64)
+	} else {
+		endDate = time.Now().Unix()
+	}
 	startDate := endDate - days*3600*24
 
 	userIdList := getUserList(r)
@@ -553,17 +616,20 @@ func GetGeneralSummary(w http.ResponseWriter, r *http.Request) {
 	generatedSummary := make(map[int64]SessionsSummary, 0)
 
 	for _, currentUserId := range userIdList {
-		url := fmt.Sprintf("%v/api/sessions/find/?and=userId:%v&range=timestamp:%v:%v", config.GetDatastoreUrl(), currentUserId, startDate, endDate)
+		url := fmt.Sprintf("%v/api/sessions/find?and=UserId^%v&span=EndedAt^%v^%v&limit=100000000", config.GetDatastoreUrl(), currentUserId, startDate, endDate)
 		userSessionResponseData := getFromDataStore(url)
-		var userSessionsData Sessions
-		json.Unmarshal(userSessionResponseData, &userSessionsData)
+		var userSessionsData SessionLists
+		err := json.Unmarshal(userSessionResponseData, &userSessionsData)
+		if err != nil {
+			log.Println("Error unmarshalling session data")
+		}
 
 		for _, session := range userSessionsData {
 			currentSessionType := session.Type
-			sessionStartTime := session.StartTime
-			sessionStartDate := getDayStart(sessionStartTime, "Asia/Kolkata")
+			sessionEndTime := session.EndedAt
+			sessionKey := getDayStart(sessionEndTime, "Asia/Kolkata")
 			var currentDateSessionSummary SessionsSummary
-			if sessionSummary, ok := generatedSummary[sessionStartDate]; ok {
+			if sessionSummary, ok := generatedSummary[sessionKey]; ok {
 				currentDateSessionSummary = sessionSummary
 			} else {
 				currentDateSessionSummary = SessionsSummary{}
@@ -573,56 +639,68 @@ func GetGeneralSummary(w http.ResponseWriter, r *http.Request) {
 			} else if currentSessionType == "Meditation" {
 				currentDateSessionSummary.Meditations++
 			}
-			generatedSummary[sessionStartTime] = currentDateSessionSummary
+			generatedSummary[sessionKey] = currentDateSessionSummary
 		}
 	}
 
 	responseData := map[string]interface{}{
 		"data": generatedSummary,
 	}
+	w.Header().Add("Content-Type", "application/json")
 
 	json.NewEncoder(w).Encode(responseData)
 }
 
-func validateAndFetchQueryParameters(w http.ResponseWriter, r *http.Request) (string, int64, int64, string) {
+func validateAndFetchQueryParameters(w http.ResponseWriter, r *http.Request) (string, *int64, *int64, *string, error) {
 	sFrom := request.GetQueryParam(r, "from")
 	sTo := request.GetQueryParam(r, "to")
 	sessionId := request.GetPathParam(r, "id")
 	property := request.GetQueryParam(r, "property")
 
 	if len(sFrom) == 0 {
-		response.WriteError(w, http.StatusBadRequest, errors.New("From not passed with request"))
+		return sessionId, nil, nil, nil, errors.New(http.StatusBadRequest, "from is missing in request")
 	}
 	if len(sTo) == 0 {
-		response.WriteError(w, http.StatusBadRequest, errors.New("To not passed with request"))
+		return sessionId, nil, nil, nil, errors.New(http.StatusBadRequest, "to is missing in request")
 	}
 	if len(sessionId) == 0 {
-		response.WriteError(w, http.StatusBadRequest, errors.New("Session Id not passed with request"))
+		return sessionId, nil, nil, nil, errors.New(http.StatusBadRequest, "sessionId is missing in request")
 	}
 	if len(property) == 0 {
-		response.WriteError(w, http.StatusBadRequest, errors.New("Property not passed with request"))
+		return sessionId, nil, nil, nil, errors.New(http.StatusBadRequest, "property is missing in request")
 	}
 
 	from, _ := strconv.ParseInt(sFrom, 10, 64)
 	to, _ := strconv.ParseInt(sTo, 10, 64)
 
-	return sessionId, from, to, property
+	return sessionId, &from, &to, &property, nil
 }
 
 func GetSessionPropertyFunc(w http.ResponseWriter, r *http.Request) {
-	sessionId, from, to, property := validateAndFetchQueryParameters(w, r)
+	os.Setenv("FILE_STORE", "fluentd")
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	logger.InitLogger("sens.lambda.GetSessionPropertyFunc")
 
-	timeData := map[string]TimeSeriesData{
-		property: make(TimeSeriesData, 0),
+	sessionId, from, to, property, err := validateAndFetchQueryParameters(w, r)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	fetchSessionRecords(sessionId, from, to, &timeData)
+	timeData := map[string]TimeSeriesData{
+		*property: make(TimeSeriesData, 0),
+	}
+
+	sessionData := getSessionData(sessionId)
+
+	fetchSessionRecords(sessionData.Id, *from, *to, &timeData)
 
 	responseData := map[string]interface{}{
 		"data": timeData,
 	}
 
-	err := json.NewEncoder(w).Encode(responseData)
+	err = json.NewEncoder(w).Encode(responseData)
 
 	if err != nil {
 		response.WriteError(w, http.StatusInternalServerError, err)
@@ -630,12 +708,16 @@ func GetSessionPropertyFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetParameterWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
-	sessionId := request.GetPathParam(r, "id")
+	os.Setenv("FILE_STORE", "fluentd")
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	logger.InitLogger("sens.lambda.GetParameterWiseAdvancedSessionData")
+
+	sessionId := request.GetQueryParam(r, "id")
 
 	sessionData := getSessionData(sessionId)
-	sessionUserId := sessionData.UserId
-	sessionStartTime := sessionData.StartTime
-	sessionEndTime := sessionData.EndTime
+	sessionUserId := sessionData.UserId.Value
+	sessionStartTime := sessionData.StartTime.Value
+	sessionEndTime := sessionData.EndTime.Value
 
 	requestedKey := r.URL.Query().Get("dataKey")
 
@@ -653,12 +735,16 @@ func GetParameterWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request)
 }
 
 func GetCategoryWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("FILE_STORE", "fluentd")
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	logger.InitLogger("sens.lambda.GetCategoryWiseAdvancedSessionData")
+
 	sessionId := request.GetPathParam(r, "id")
 
 	session := getSessionData(sessionId)
-	sessionUserId := session.UserId
-	sessionStartTime := session.StartTime
-	sessionEndTime := session.EndTime
+	sessionUserId := session.UserId.Value
+	sessionStartTime := session.StartTime.Value
+	sessionEndTime := session.EndTime.Value
 
 	categoriesData := map[string]interface{}{
 		"Stress": map[string]TimeSeriesData{
@@ -702,7 +788,6 @@ func GetCategoryWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) 
 		typeOfValue := reflect.TypeOf(value)
 		if typeOfValue == reflect.TypeOf(map[string]TimeSeriesData{}) {
 			typeCastedValue := value.(map[string]TimeSeriesData)
-			log.Println(typeCastedValue)
 			fetchSessionRecords(sessionUserId, sessionStartTime, sessionEndTime, &typeCastedValue)
 		}
 
