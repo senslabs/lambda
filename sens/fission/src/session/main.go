@@ -394,16 +394,11 @@ func Bod(t time.Time) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, t.Location())
 }
 
-func getDayStart(timestamp int64, timezone string) (int64, error) {
-	if timezoneObj, err := time.LoadLocation(timezone); err != nil {
-		logger.Error(err)
-		return 0, err
-	} else {
-		timestampTime := time.Unix(timestamp, 0).In(timezoneObj)
-		startOfDay := Bod(timestampTime)
-		startOfDayUnix := startOfDay.Unix()
-		return startOfDayUnix, nil
-	}
+func getDayStart(timestamp int64) int64 {
+	timestampTime := time.Unix(timestamp, 0).In(timezoneObj)
+	startOfDay := Bod(timestampTime)
+	startOfDayUnix := startOfDay.Unix()
+	return startOfDayUnix
 }
 
 func getFromDataStore(URL string) []byte {
@@ -594,23 +589,19 @@ func GetGeneralSummary(w http.ResponseWriter, r *http.Request) {
 		for _, session := range userSessionsData {
 			currentSessionType := session.Type
 			sessionEndTime := session.EndedAt
-			if sessionKey, err := getDayStart(sessionEndTime, "Asia/Kolkata"); err != nil {
-				logger.Error(err)
-				response.WriteError(w, http.StatusInternalServerError, err)
+			sessionKey := getDayStart(sessionEndTime)
+			var currentDateSessionSummary SessionsSummary
+			if sessionSummary, ok := generatedSummary[sessionKey]; ok {
+				currentDateSessionSummary = sessionSummary
 			} else {
-				var currentDateSessionSummary SessionsSummary
-				if sessionSummary, ok := generatedSummary[sessionKey]; ok {
-					currentDateSessionSummary = sessionSummary
-				} else {
-					currentDateSessionSummary = SessionsSummary{}
-				}
-				if currentSessionType == "Sleep" {
-					currentDateSessionSummary.Sleeps++
-				} else if currentSessionType == "Meditation" {
-					currentDateSessionSummary.Meditations++
-				}
-				generatedSummary[sessionKey] = currentDateSessionSummary
+				currentDateSessionSummary = SessionsSummary{}
 			}
+			if currentSessionType == "Sleep" {
+				currentDateSessionSummary.Sleeps++
+			} else if currentSessionType == "Meditation" {
+				currentDateSessionSummary.Meditations++
+			}
+			generatedSummary[sessionKey] = currentDateSessionSummary
 		}
 	}
 
