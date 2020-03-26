@@ -395,7 +395,7 @@ func Bod(t time.Time) time.Time {
 }
 
 func getDayStart(timestamp int64) int64 {
-	timestampTime := time.Unix(timestamp, 0).In(timezoneObj)
+	timestampTime := time.Unix(timestamp, 0)
 	startOfDay := Bod(timestampTime)
 	startOfDayUnix := startOfDay.Unix()
 	return startOfDayUnix
