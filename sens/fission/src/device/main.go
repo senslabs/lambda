@@ -6,44 +6,59 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/senslabs/alpha/sens/errors"
 	"github.com/senslabs/alpha/sens/httpclient"
 	"github.com/senslabs/alpha/sens/logger"
 	"github.com/senslabs/lambda/sens/fission/config"
+	"github.com/senslabs/lambda/sens/fission/request"
 	"github.com/senslabs/lambda/sens/fission/response"
 )
 
-func duplicateDevice(w http.ResponseWriter, r *http.Request, orgId string, userId string, status string) error {
-	logger.InitLogger("")
+type Device struct {
+	DeviceId   string      `json:",omitempty"`
+	Name       string      `json:",omitempty"`
+	OrgId      string      `json:",omitempty"`
+	UserId     string      `json:",omitempty"`
+	CreatedAt  time.Time   `json:",omitempty"`
+	Status     string      `json:",omitempty"`
+	Properties interface{} `json:",omitempty"`
+}
 
+func duplicateDevice(w http.ResponseWriter, r *http.Request, orgId string, userId string, status string) error {
 	if orgId == "" && userId == "" && status == "" {
 		return httpclient.WriteError(w, http.StatusBadRequest, errors.New(http.StatusBadRequest, "No change in data"))
 	}
-	deviceId := mux.Vars(r)["deviceId"]
-	var device map[string]interface{}
+	deviceId := request.GetPathParam(r, "deviceId")
+	var devices []Device
 	url := fmt.Sprintf("%s%s", config.GetDatastoreUrl(), "/api/devices/find")
-	and := httpclient.HttpParams{"DeviceId": {deviceId}}
-	code, err := httpclient.Get(url, and, nil, &device)
-	logger.Debugf("%d, %#v", code, device)
-	if err != nil {
-		return httpclient.WriteError(w, code, err)
+	and := httpclient.HttpParams{"DeviceId": {deviceId}, "column": {"CreatedAt"}, "limit": {"1"}}
+	code, err := httpclient.Get(url, and, nil, &devices)
+	if len(devices) == 0 {
+		return httpclient.WriteError(w, http.StatusBadRequest, errors.New(errors.DB_ERROR, "No devices found"))
 	} else {
-		delete(device, "Id")
-		device["CreatedAt"] = time.Now()
-		if status != "" {
-			device["Status"] = status
-		}
-		if orgId != "" {
-			device["OrgId"] = orgId
-		}
-		if userId != "" {
-			device["UserId"] = userId
-		}
-		url := fmt.Sprintf("%s%s", config.GetDatastoreUrl(), "/api/devices/create")
-		code, _, err := httpclient.PostR(url, and, nil, &device)
+		device := devices[0]
+		logger.Debugf("%d, %#v", code, device)
 		if err != nil {
 			return httpclient.WriteError(w, code, err)
+		} else {
+			device.CreatedAt = time.Now()
+			if status != "" {
+				device.Status = status
+			}
+			if orgId != "" {
+				device.OrgId = orgId
+			}
+			if userId != "" {
+				device.UserId = userId
+			}
+			url := fmt.Sprintf("%s%s", config.GetDatastoreUrl(), "/api/devices/create")
+			if body, err := json.Marshal(device); err != nil {
+				return httpclient.WriteError(w, code, err)
+			} else if code, _, err := httpclient.PostR(url, nil, nil, body); err != nil {
+				return httpclient.WriteError(w, code, err)
+			} else {
+				w.WriteHeader(code)
+			}
 		}
 	}
 	return nil

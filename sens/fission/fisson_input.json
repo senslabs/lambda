@@ -2,7 +2,7 @@
     "test-ds": {
         "src": "src/test/main.go",
         "entry": "TestDatastore",
-        "path": "/test",
+        "path": "/test/ds",
         "method": "POST"
     },
     "list-sessions": {
@@ -76,6 +76,18 @@
         "entry": "GetOrgDetail",
         "method": "POST",
         "path": "/api/orgs/{id}/detail"
+    },
+    "list-org-devices": {
+        "src": "src/org/main.go",
+        "entry": "ListOrgDevices",
+        "method": "POST",
+        "path": "/api/devices/find"
+    },
+    "list-org-users": {
+        "src": "src/org/main.go",
+        "entry": "ListOrgUsers",
+        "method": "POST",
+        "path": "/api/users/find"
     },
     "get-op-detail": {
         "src": "src/auth/main.go",

@@ -19,5 +19,5 @@ do
   if [ "$f" == "NAME" ]; then
     continue
   fi
-  fission pkg delete --name $f --verbosity=2
+  fission route delete --name $f --verbosity=2
 done

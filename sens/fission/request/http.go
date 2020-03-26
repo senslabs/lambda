@@ -14,6 +14,11 @@ func GetPathParam(r *http.Request, key string) string {
 
 func GetHeaderValue(r *http.Request, key string) string {
 	key = textproto.CanonicalMIMEHeaderKey(key)
+	return r.Header.Get(key)
+}
+
+func GetSensHeaderValue(r *http.Request, key string) string {
+	key = textproto.CanonicalMIMEHeaderKey(key)
 	key = fmt.Sprintf("%s-%s", "X-Sens", key)
 	return r.Header.Get(key)
 }

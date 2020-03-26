@@ -25,7 +25,8 @@ func getDatastoreUrl() string {
 }
 
 func TestDatastore(w http.ResponseWriter, r *http.Request) {
-	logger.InitConsoleLogger()
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	logger.InitFluentLogger("sens.proxy.TestDatastore")
 	var d Data
 	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
 		fmt.Fprintln(w, err)

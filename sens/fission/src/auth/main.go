@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -13,6 +14,7 @@ import (
 	"github.com/senslabs/alpha/sens/logger"
 	"github.com/senslabs/alpha/sens/types"
 	"github.com/senslabs/lambda/sens/fission/config"
+	"github.com/senslabs/lambda/sens/fission/request"
 	"github.com/senslabs/lambda/sens/fission/response"
 )
 
@@ -47,12 +49,11 @@ func VerifyOtp(w http.ResponseWriter, r *http.Request) {
 	logger.InitLogger("sens.lambda.VerifyOtp")
 	var reqBody VerifyRequestBody
 	if err := types.JsonUnmarshalFromReader(r.Body, &reqBody); err != nil {
-		logger.Error(err)
 		response.WriteError(w, http.StatusInternalServerError, err)
 	} else if verified, err := verifyOtp(reqBody); err != nil || !verified {
 		logger.Error("Verified:", verified, err)
 		response.WriteError(w, http.StatusInternalServerError, err)
-	} else if auth, err := LoadAuth(reqBody.Id); err != nil {
+	} else if auth, err := BuildAuth(r, reqBody.Id); err != nil {
 		logger.Error(err)
 		response.WriteError(w, http.StatusInternalServerError, err)
 	} else {
@@ -71,7 +72,7 @@ func CreateAuth(w http.ResponseWriter, r *http.Request) {
 		response.WriteError(w, code, err)
 	} else {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, data)
+		fmt.Fprintf(w, "%s", data)
 	}
 }
 
@@ -80,34 +81,31 @@ func createUser(w http.ResponseWriter, r *http.Request, category string) error {
 	url := fmt.Sprintf("%s/api/%ss/create", config.GetDatastoreUrl(), strings.ToLower(category))
 	code, data, err := httpclient.PostR(url, nil, nil, r.Body)
 	logger.Debug(code, data)
-	return httpclient.WriteError(w, code, err)
+	if err != nil {
+		return httpclient.WriteError(w, code, err)
+	}
+	fmt.Fprintf(w, "%s", data)
+	return nil
 }
-
-// else if err := mapUserAuth(w, r, category, string(data)); err != nil {
-// 	logger.Error(err)
-// 	response.WriteError(w, code, err)
-// } else {
-// 	w.WriteHeader(http.StatusOK)
-// 	fmt.Fprintln(w, data)
-// }
 
 //Map that category user to auth
-func mapUserAuth(w http.ResponseWriter, r *http.Request, category string, categoryId string) error {
-	url := fmt.Sprintf("%s/api/%s-auths/create", config.GetDatastoreUrl(), strings.ToLower(category))
-	authId := r.Header.Get("x-sens-auth-id")
-	body := fmt.Sprintf(`{"%sId": "%s", "AuthId":"%s"}`, category, categoryId, authId)
-	code, data, err := httpclient.PostR(url, nil, nil, body)
-	logger.Debug(code, data)
-	if err != nil {
-		logger.Error(err)
-		logger.Error("Failed in Mapping", category, "AuthId:", authId, category+"Id:", authId)
-	}
-	return err
-}
+// func mapUserAuth(w http.ResponseWriter, r *http.Request, category string, categoryId string) error {
+// 	url := fmt.Sprintf("%s/api/%s-auths/create", config.GetDatastoreUrl(), strings.ToLower(category))
+// 	authId := r.Header.Get("x-sens-auth-id")
+// 	body := fmt.Sprintf(`{"%sId": "%s", "AuthId":"%s"}`, category, categoryId, authId)
+// 	code, data, err := httpclient.PostR(url, nil, nil, body)
+// 	logger.Debug(code, data)
+// 	if err != nil {
+// 		logger.Error(err)
+// 		logger.Error("Failed in Mapping", category, "AuthId:", authId, category+"Id:", authId)
+// 	}
+// 	return err
+// }
 
 //Get the category user details
 func getUserDetail(w http.ResponseWriter, r *http.Request, category string) {
-	url := fmt.Sprintf("%s/api/%s-detail-views/create", config.GetDatastoreUrl(), strings.ToLower(category))
+	id := request.GetPathParam(r, "id")
+	url := fmt.Sprintf("%s/api/%s-detail-views/%s/get", config.GetDatastoreUrl(), strings.ToLower(category), id)
 	code, data, err := httpclient.GetR(url, nil, nil)
 	logger.Debugf("Code: %d, Data: %v", code, data)
 	if err != nil {
@@ -115,7 +113,7 @@ func getUserDetail(w http.ResponseWriter, r *http.Request, category string) {
 		response.WriteError(w, code, err)
 	} else {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, data)
+		fmt.Fprintf(w, "%s", data)
 	}
 }
 
@@ -197,8 +195,18 @@ func verifyOtp(reqBody VerifyRequestBody) (bool, error) {
 	}
 	return true, nil
 }
+func buildAuth(r *http.Request, auths []byte, id string) ([]byte, error) {
+	var subs []map[string]interface{}
+	if err := json.Unmarshal(auths, &subs); err != nil {
+		logger.Error(err)
+		return nil, errors.FromError(errors.GO_ERROR, err)
+	}
+	sub := subs[0]
+	sub["Category"] = request.GetQueryParam(r, "category")
+	return json.Marshal(sub)
+}
 
-func LoadAuth(id string) ([]byte, error) {
+func BuildAuth(r *http.Request, id string) ([]byte, error) {
 	or := httpclient.HttpParams{"Mobile": {id}, "Email": {id}, "Social": {id}}
 	url := fmt.Sprintf("%s/api/auths/find", config.GetDatastoreUrl())
 	code, auths, err := httpclient.GetR(url, or, nil)
@@ -211,10 +219,10 @@ func LoadAuth(id string) ([]byte, error) {
 			logger.Error(err)
 			return nil, errors.FromError(errors.GO_ERROR, err)
 		} else {
-			return []byte(fmt.Sprintf(`[{"Id": %s, "Exists", false}]`, authId.String())), nil
+			return []byte(fmt.Sprintf(`[{"Id": "%s", "Exists": false}]`, authId.String())), nil
 		}
 	} else {
-		return auths, nil
+		return buildAuth(r, auths, id)
 	}
 }
 
