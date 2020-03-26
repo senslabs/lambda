@@ -307,7 +307,7 @@ func getTotalDurationFromStages(stages TimeSeriesData) int64 {
 			eventTimeDiff = stage.Time - previousTime
 		}
 		if stage.Value != 4 {
-			sleepStageCounter++
+			sleepStageCounter += 1
 		}
 	}
 	sessionSleepDuration = sleepStageCounter * eventTimeDiff
@@ -515,6 +515,7 @@ func ListSessions(w http.ResponseWriter, r *http.Request) {
 	// 5. Session Duration
 	// 6. Recovery Value
 	//sessionId := urlQueryParams.Get("id")
+	logger.Debug(r)
 	sessionType := request.GetQueryParam(r, "type")
 	if len(sessionType) == 0 {
 		httpclient.WriteError(w, http.StatusBadRequest, errors.New(http.StatusBadRequest, "Type not passed with request"))
@@ -646,7 +647,7 @@ func GetSessionPropertyFunc(w http.ResponseWriter, r *http.Request) {
 	os.Setenv("FILE_STORE", "fluentd")
 	os.Setenv("LOG_LEVEL", "DEBUG")
 	logger.InitLogger("sens.lambda.GetSessionPropertyFunc")
-
+	logger.Debug(r)
 	sessionId, from, to, property, err := validateAndFetchQueryParameters(w, r)
 
 	if err != nil {
@@ -660,11 +661,13 @@ func GetSessionPropertyFunc(w http.ResponseWriter, r *http.Request) {
 
 	sessionData := getSessionData(sessionId)
 
-	fetchSessionRecords(sessionData.Id, *from, *to, &timeData)
+	fetchSessionRecords(sessionData.UserId, *from, *to, &timeData)
 
 	responseData := map[string]interface{}{
 		"data": timeData,
 	}
+
+	w.Header().Add("Content-Type", "application/json")
 
 	err = json.NewEncoder(w).Encode(responseData)
 
