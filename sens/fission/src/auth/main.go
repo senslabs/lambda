@@ -111,7 +111,7 @@ func getUserDetail(w http.ResponseWriter, r *http.Request, category string) {
 	id := request.GetPathParam(r, "id")
 	url := fmt.Sprintf("%s/api/%s-detail-views/%s/get", config.GetDatastoreUrl(), strings.ToLower(category), id)
 	code, data, err := httpclient.GetR(url, nil, nil)
-	logger.Debugf("Code: %d, Data: %v", code, data)
+	logger.Debugf("Code: %d, Data: %s", code, data)
 	if err != nil {
 		logger.Error(err)
 		response.WriteError(w, code, err)
