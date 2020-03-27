@@ -342,13 +342,12 @@ func getSessionData(sessionId string) Session {
 
 	sessionResponseData := getFromDataStore(sessionUrl)
 
-	var sessionsData Sessions
-	err := json.Unmarshal(sessionResponseData, &sessionsData)
+	var sessionData Session
+	err := json.Unmarshal(sessionResponseData, &sessionData)
 
 	if err != nil {
 		log.Printf("Error unmarshalling response data to sleep data : %v", err)
 	}
-	sessionData := sessionsData[0]
 
 	return sessionData
 }
