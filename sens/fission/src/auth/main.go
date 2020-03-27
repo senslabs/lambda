@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/senslabs/alpha/sens/errors"
 	"github.com/senslabs/alpha/sens/httpclient"
 	"github.com/senslabs/alpha/sens/logger"
@@ -25,6 +24,9 @@ type AuthRequestBody struct {
 }
 
 func RequestOtp(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	os.Setenv("LOG_LEVEL", "DEBUG")
 	logger.InitLogger("sens.lambda.RequestOtp")
 	var reqBody AuthRequestBody
 	if err := types.JsonUnmarshalFromReader(r.Body, &reqBody); err != nil {
@@ -56,7 +58,7 @@ func VerifyOtp(w http.ResponseWriter, r *http.Request) {
 		response.WriteError(w, http.StatusInternalServerError, err)
 	} else if code, err := verifyOtp(reqBody); err != nil || code != http.StatusOK {
 		logger.Error("Code", code, err)
-		response.WriteError(w, http.StatusInternalServerError, err)
+		response.WriteError(w, code, err)
 	} else if auth, err := BuildAuth(r, reqBody.Id); err != nil {
 		logger.Error(err)
 		response.WriteError(w, http.StatusInternalServerError, err)
@@ -210,12 +212,19 @@ func buildAuth(r *http.Request, auths []byte, id string) ([]byte, error) {
 		return nil, errors.FromError(errors.GO_ERROR, err)
 	}
 	sub := subs[0]
-	sub["Category"] = request.GetQueryParam(r, "category")
+	logger.Debugf("%#v", sub)
+	category := request.GetQueryParam(r, "category")
+	// categoryIdField := strings.Title(category) + "Id"
+	sub["Category"] = category
+	// url := fmt.Sprintf("%s/api/%ss/find", config.GetDatastoreUrl(), sub["Category"])
+	// params := httpclient.HttpParams{"and": {"AuthId^" + sub["Id"]}, "limit": {1}}
+	// httpclient.GetR(url, params, nil)
 	return json.Marshal(sub)
 }
 
 func BuildAuth(r *http.Request, id string) ([]byte, error) {
-	or := httpclient.HttpParams{"Mobile": {id}, "Email": {id}, "Social": {id}, "limit": {"1"}}
+	or := httpclient.HttpParams{"or": {"Mobile^" + id, "Email^" + id, "Social^" + id}, "limit": {"1"}}
+	logger.Debugf("OR: %#v", or)
 	url := fmt.Sprintf("%s/api/auths/find", config.GetDatastoreUrl())
 	code, auths, err := httpclient.GetR(url, or, nil)
 	logger.Debugf("%d, %s", code, auths)
@@ -223,12 +232,7 @@ func BuildAuth(r *http.Request, id string) ([]byte, error) {
 		logger.Error("HTTP response code:", code, err)
 		return nil, err
 	} else if bytes.Equal(auths, []byte("[]")) {
-		if authId, err := uuid.NewRandom(); err != nil {
-			logger.Error(err)
-			return nil, errors.FromError(errors.GO_ERROR, err)
-		} else {
-			return []byte(fmt.Sprintf(`[{"Id": "%s", "Exists": false}]`, authId.String())), nil
-		}
+		return []byte(fmt.Sprintf(`[{"Id": "%s", "Exists": false}]`, id)), nil
 	} else {
 		return buildAuth(r, auths, id)
 	}

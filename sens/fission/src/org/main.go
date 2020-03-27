@@ -31,12 +31,15 @@ func ListOrgDevices(w http.ResponseWriter, r *http.Request) {
 }
 
 func ListOrgUsers(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	os.Setenv("LOG_LEVEL", "DEBUG")
 	logger.InitLogger("sens.lambda.ListOrgUsers")
 	orgId := request.GetHeaderValue(r, "x-sens-org-id")
 	and := httpclient.HttpParams{"and": {"OrgId^" + orgId}, "limit": {"100"}}
-	url := fmt.Sprintf("%s/api/users/find", config.GetDatastoreUrl())
+	url := fmt.Sprintf("%s/api/user-detail-views/find", config.GetDatastoreUrl())
 	code, data, err := httpclient.GetR(url, and, nil)
-	logger.Debug(code, data)
+	logger.Debugf("ListOrgUsers: %d, %s", code, data)
 	if err != nil {
 		logger.Error(err)
 		response.WriteError(w, code, err)
