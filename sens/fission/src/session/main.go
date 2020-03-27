@@ -342,13 +342,12 @@ func getSessionData(sessionId string) Session {
 
 	sessionResponseData := getFromDataStore(sessionUrl)
 
-	var sessionsData Sessions
-	err := json.Unmarshal(sessionResponseData, &sessionsData)
+	var sessionData Session
+	err := json.Unmarshal(sessionResponseData, &sessionData)
 
 	if err != nil {
 		log.Printf("Error unmarshalling response data to sleep data : %v", err)
 	}
-	sessionData := sessionsData[0]
 
 	return sessionData
 }
@@ -493,11 +492,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 	sessionSessionData.Stages = requiredSessionRecords["Stages"]
 	sessionSessionData.Stress = requiredSessionRecords["Stress"]
 
-	responseData := map[string]interface{}{
-		"data": sessionSessionData,
-	}
-
-	json.NewEncoder(w).Encode(responseData)
+	json.NewEncoder(w).Encode(sessionSessionData)
 }
 
 func ListSessions(w http.ResponseWriter, r *http.Request) {
@@ -540,13 +535,9 @@ func ListSessions(w http.ResponseWriter, r *http.Request) {
 			sessionsSnapshots[currentUserId] = append(sessionsSnapshots[currentUserId], sessionSnapshotData)
 		}
 
-		responseData := map[string]interface{}{
-			"data": sessionsSnapshots,
-		}
-
 		w.Header().Add("Content-Type", "application/json")
 
-		json.NewEncoder(w).Encode(responseData)
+		json.NewEncoder(w).Encode(sessionsSnapshots)
 	}
 }
 
@@ -612,12 +603,9 @@ func GetGeneralSummary(w http.ResponseWriter, r *http.Request) {
 		generatedSummaryList = append(generatedSummaryList, currentSummary)
 	}
 
-	responseData := map[string]interface{}{
-		"data": generatedSummaryList,
-	}
 	w.Header().Add("Content-Type", "application/json")
 
-	json.NewEncoder(w).Encode(responseData)
+	json.NewEncoder(w).Encode(generatedSummaryList)
 }
 
 func validateAndFetchQueryParameters(w http.ResponseWriter, r *http.Request) (string, *int64, *int64, *string, error) {
@@ -665,13 +653,9 @@ func GetSessionPropertyFunc(w http.ResponseWriter, r *http.Request) {
 
 	fetchSessionRecords(sessionData.UserId, *from, *to, &timeData)
 
-	responseData := map[string]interface{}{
-		"data": timeData,
-	}
-
 	w.Header().Add("Content-Type", "application/json")
 
-	err = json.NewEncoder(w).Encode(responseData)
+	err = json.NewEncoder(w).Encode(timeData)
 
 	if err != nil {
 		response.WriteError(w, http.StatusInternalServerError, err)
@@ -699,11 +683,7 @@ func GetParameterWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request)
 
 	fetchSessionRecords(sessionUserId, sessionStartTime, sessionEndTime, &requestedData)
 
-	responseData := map[string]interface{}{
-		"data": requestedData,
-	}
-
-	json.NewEncoder(w).Encode(responseData)
+	json.NewEncoder(w).Encode(requestedData)
 }
 
 func GetCategoryWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) {
@@ -763,10 +743,7 @@ func GetCategoryWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) 
 			fetchSessionRecords(sessionUserId, sessionStartTime, sessionEndTime, &typeCastedValue)
 		}
 
-		responseData := map[string]interface{}{
-			"data": value,
-		}
-		json.NewEncoder(w).Encode(responseData)
+		json.NewEncoder(w).Encode(value)
 	} else {
 		log.Println("No category by that name found")
 		json.NewEncoder(w).Encode(map[string]string{
