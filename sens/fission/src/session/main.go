@@ -176,18 +176,34 @@ func fetchSessionRecords(sessionUserId string, sessionStartTime int64, sessionEn
 	}
 }
 
-func getUserSessions(r *http.Request, sessionType string, limit int64) Sessions {
-	//sFrom := urlQueryParams.Get("from")
-	//from, _ := strconv.ParseInt(sFrom, 10, 64)
-	//sTo := urlQueryParams.Get("to")
-	//to, _ := strconv.ParseInt(sTo, 10, 64)
+func getUserSessions(r *http.Request, sessionType string, limit int64, userId *string) Sessions {
+	sFrom := request.GetQueryParam(r, "from")
+	var from int64
+	var to int64
+	if len(sFrom) != 0 {
+		from, _ = strconv.ParseInt(sFrom, 10, 64)
+	}
+	sTo := request.GetQueryParam(r, "to")
+	if len(sTo) != 0 {
+		to, _ = strconv.ParseInt(sTo, 10, 64)
+	}
 
-	userIdList := getUserList(r)
+	var userIdList []string
+	if userId == nil {
+		userIdList = getUserList(r)
+	} else {
+		userIdList = append(userIdList, *userId)
+	}
 
 	userSessionsData := make(Sessions, 0)
 
 	for _, currentUserId := range userIdList {
-		url := fmt.Sprintf("%v/api/sessions/find?and=UserId^%v&limit=%v&and=Type^%v&column=CreatedAt", config.GetDatastoreUrl(), currentUserId, limit, sessionType)
+		var url string
+		url = fmt.Sprintf("%v/api/sessions/find?and=UserId^%v&limit=%v&and=Type^%v&column=EndedAt", config.GetDatastoreUrl(), currentUserId, limit, sessionType)
+		if from != 0 && to != 0 {
+			url = fmt.Sprintf("%v&span=EndedAt^%v^%v", url, from, to)
+		}
+
 		userSessionResponseData := getFromDataStore(url)
 		var currentSessionData Sessions
 		json.Unmarshal(userSessionResponseData, &currentSessionData)
@@ -523,7 +539,7 @@ func ListSessions(w http.ResponseWriter, r *http.Request) {
 			limit = 1
 		}
 
-		userSessionsData := getUserSessions(r, sessionType, limit)
+		userSessionsData := getUserSessions(r, sessionType, limit, nil)
 
 		sessionsSnapshots := make(map[string]SessionSnapshots, 0)
 
@@ -749,5 +765,39 @@ func GetCategoryWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) 
 		json.NewEncoder(w).Encode(map[string]string{
 			"error": "Category not found!",
 		})
+	}
+}
+
+func ListUserSessions(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("FILE_STORE", "fluentd")
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	logger.InitLogger("sens.lambda.ListUserSessions")
+
+	userId := request.GetPathParam(r, "id")
+	sessionType := request.GetQueryParam(r, "type")
+	if len(sessionType) == 0 {
+		httpclient.WriteError(w, http.StatusBadRequest, errors.New(http.StatusBadRequest, "Type not passed with request"))
+	} else {
+		var limit int64
+		sLimit := request.GetQueryParam(r, "limit")
+		if len(sLimit) != 0 {
+			limit, _ = strconv.ParseInt(sLimit, 10, 64)
+		} else {
+			limit = 1
+		}
+		userSessionsData := getUserSessions(r, sessionType, limit, &userId)
+
+		userSessionsSnapshots := make(SessionSnapshots, 0)
+
+		for _, currentSession := range userSessionsData {
+			currentSessionId := currentSession.Id
+			currentSessionType := currentSession.Type
+			sessionSnapshotData := getSessionSnapshot(currentSessionId, currentSessionType)
+			userSessionsSnapshots = append(userSessionsSnapshots, sessionSnapshotData)
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+
+		json.NewEncoder(w).Encode(userSessionsSnapshots)
 	}
 }
