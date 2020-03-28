@@ -190,7 +190,6 @@ func verifyOtp(reqBody VerifyRequestBody) (int, error) {
 		"Authorization": {"Basic QUM2MmFlOWU0N2I2MTI2M2YyZDQwYzdjYjhjMzMyNzU4OTo4MTg4MGNhMTBmMjMxMGUxNjdlZGI1YTRmZGVjMDUxMg=="},
 		"Content-Type":  {"application/x-www-form-urlencoded"},
 	}, []byte(body))
-	logger.Debugf("%d, %#v", code, data)
 	if err != nil {
 		logger.Error(err)
 		return code, err
