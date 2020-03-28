@@ -11,6 +11,12 @@
         "path": "/api/sessions/list",
         "method": "GET"
     },
+    "list-user-sessions": {
+        "src": "src/session/main.go",
+        "entry": "ListUserSessions",
+        "path": "/api/users/{id}/sessions/list",
+        "method": "GET"
+    },
     "get-session-summary": {
         "src": "src/session/main.go",
         "entry": "GetSessionSummary",
