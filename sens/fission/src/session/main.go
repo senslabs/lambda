@@ -146,6 +146,8 @@ func fetchSessionProperties(sessionId string, requiredSessionProperties map[stri
 				value, _ = strconv.ParseInt(sValue, 10, 64)
 			} else if key == "WakeupTime" || key == "SleepTime" || key == "SunriseTime" {
 				value, _ = strconv.ParseInt(sValue, 10, 64)
+			} else {
+				value, _ = strconv.ParseInt(sValue, 10, 64)
 			}
 			requiredSessionProperties[key] = value
 		}
