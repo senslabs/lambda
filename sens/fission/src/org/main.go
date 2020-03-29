@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/senslabs/alpha/sens/httpclient"
 	"github.com/senslabs/alpha/sens/logger"
@@ -20,8 +19,11 @@ func ListOrgDevices(w http.ResponseWriter, r *http.Request) {
 	logger.InitLogger("sens.lambda.ListOrgDevices")
 	orgId := request.GetSensHeaderValue(r, "Org-Id")
 	status := request.GetQueryParam(r, "status")
-	and := httpclient.HttpParams{"and": {"OrgId^" + orgId, "Status^" + strings.ToUpper(status)}, "limit": {"100"}}
-	url := fmt.Sprintf("%s/api/devices/find", config.GetDatastoreUrl())
+	and := httpclient.HttpParams{"and": {"OrgId^" + orgId}, "limit": {"100"}}
+	if status != "" {
+		and["and"] = append(and["and"], status)
+	}
+	url := fmt.Sprintf("%s/api/device-views/find", config.GetDatastoreUrl())
 	code, data, err := httpclient.GetR(url, and, nil)
 	logger.Debugf("%d, %#v", code, data)
 	if err != nil {

@@ -42,10 +42,10 @@ func RequestOtp(w http.ResponseWriter, r *http.Request) {
 }
 
 type VerifyRequestBody struct {
-	Id               string
-	Medium           string
-	Session          string
-	ConfirmationCode string
+	Id        string
+	Medium    string
+	SessionId string
+	Otp       string
 }
 
 func VerifyOtp(w http.ResponseWriter, r *http.Request) {
@@ -93,20 +93,6 @@ func createUser(w http.ResponseWriter, r *http.Request, category string) error {
 	fmt.Fprintf(w, "%s", data)
 	return nil
 }
-
-//Map that category user to auth
-// func mapUserAuth(w http.ResponseWriter, r *http.Request, category string, categoryId string) error {
-// 	url := fmt.Sprintf("%s/api/%s-auths/create", config.GetDatastoreUrl(), strings.ToLower(category))
-// 	authId := r.Header.Get("x-sens-auth-id")
-// 	body := fmt.Sprintf(`{"%sId": "%s", "AuthId":"%s"}`, category, categoryId, authId)
-// 	code, data, err := httpclient.PostR(url, nil, nil, body)
-// 	logger.Debug(code, data)
-// 	if err != nil {
-// 		logger.Error(err)
-// 		logger.Error("Failed in Mapping", category, "AuthId:", authId, category+"Id:", authId)
-// 	}
-// 	return err
-// }
 
 //Get the category user details
 func getUserDetail(w http.ResponseWriter, r *http.Request, category string) {
@@ -158,8 +144,13 @@ type TwilioSendOtpResponse struct {
 }
 
 func requestOtp(reqBody AuthRequestBody) (string, error) {
+	var body string
 	if reqBody.Medium == "Mobile" {
-		body := fmt.Sprintf("To=%s&Channel=sms&Locale=en", url.QueryEscape(reqBody.Id))
+		body = fmt.Sprintf("To=%s&Channel=sms&Locale=en", url.QueryEscape(reqBody.Id))
+	} else if reqBody.Medium == "Email" {
+		body = fmt.Sprintf("To=%s&Channel=email&Locale=en", url.QueryEscape(reqBody.Id))
+	}
+	if body != "" {
 		url := "https://verify.twilio.com/v2/Services/VAd156b7c4b609261239603a320c3af4e2/Verifications"
 
 		var twilioResponse TwilioSendOtpResponse
@@ -175,7 +166,7 @@ func requestOtp(reqBody AuthRequestBody) (string, error) {
 			return twilioResponse.ServiceSid, nil
 		}
 	}
-	return "", errors.New(http.StatusInternalServerError, "Only Mobiles are supported for sending OTP")
+	return "", errors.New(http.StatusBadRequest, "Didn't receive the Medium")
 }
 
 type TwilioVerifyOtpResponse struct {
@@ -183,8 +174,8 @@ type TwilioVerifyOtpResponse struct {
 }
 
 func verifyOtp(reqBody VerifyRequestBody) (int, error) {
-	body := fmt.Sprintf("To=%s&Code=%s", url.QueryEscape(reqBody.Id), reqBody.ConfirmationCode)
-	url := fmt.Sprintf("https://verify.twilio.com/v2/Services/%s/VerificationCheck", reqBody.Session)
+	body := fmt.Sprintf("To=%s&Code=%s", url.QueryEscape(reqBody.Id), reqBody.Otp)
+	url := fmt.Sprintf("https://verify.twilio.com/v2/Services/%s/VerificationCheck", reqBody.SessionId)
 	var twilioResponse TwilioVerifyOtpResponse
 	code, data, err := httpclient.PostR(url, nil, httpclient.HttpParams{
 		"Authorization": {"Basic QUM2MmFlOWU0N2I2MTI2M2YyZDQwYzdjYjhjMzMyNzU4OTo4MTg4MGNhMTBmMjMxMGUxNjdlZGI1YTRmZGVjMDUxMg=="},

@@ -32,7 +32,7 @@ func duplicateDevice(w http.ResponseWriter, r *http.Request, orgId string, userI
 	deviceId := request.GetPathParam(r, "deviceId")
 	var devices []Device
 	url := fmt.Sprintf("%s%s", config.GetDatastoreUrl(), "/api/devices/find")
-	and := httpclient.HttpParams{"DeviceId": {deviceId}, "column": {"CreatedAt"}, "limit": {"1"}}
+	and := httpclient.HttpParams{"and": {"DeviceId^" + deviceId}, "column": {"CreatedAt"}, "limit": {"1"}}
 	code, err := httpclient.Get(url, and, nil, &devices)
 	if len(devices) == 0 {
 		return httpclient.WriteError(w, http.StatusBadRequest, errors.New(errors.DB_ERROR, "No devices found"))
