@@ -146,6 +146,8 @@ func fetchSessionProperties(sessionId string, requiredSessionProperties map[stri
 				value, _ = strconv.ParseInt(sValue, 10, 64)
 			} else if key == "WakeupTime" || key == "SleepTime" || key == "SunriseTime" {
 				value, _ = strconv.ParseInt(sValue, 10, 64)
+			} else {
+				value, _ = strconv.ParseInt(sValue, 10, 64)
 			}
 			requiredSessionProperties[key] = value
 		}
@@ -267,7 +269,7 @@ func createSessionSnapshotData(sessionData Session, requiredSessionProperties ma
 	sessionBreathRateAverage := getVitalsAverage(requiredSessionRecords["BreathRate"], sessionSleepTime, sessionWakeupTime)
 	var sessionSleepDuration int64
 	if sessionType == "Sleep" {
-		sessionSleepDuration = getTotalDurationFromStages(requiredSessionRecords["Stages"])
+		sessionSleepDuration = getTotalDurationFromStages(requiredSessionRecords["Stage"])
 	} else {
 		sessionSleepDuration = requiredSessionProperties["Duration"]
 	}
@@ -322,11 +324,12 @@ func getTotalDurationFromStages(stages TimeSeriesData) int64 {
 		} else if eventTimeDiff == 0 && previousTime != 0 {
 			eventTimeDiff = stage.Time - previousTime
 		}
-		if stage.Value != 4 {
+		currentStage := stage.Value.(int64)
+		if currentStage != 4 {
 			sleepStageCounter += 1
 		}
 	}
-	sessionSleepDuration = sleepStageCounter * eventTimeDiff
+	sessionSleepDuration = sleepStageCounter * (eventTimeDiff / 1000)
 	return sessionSleepDuration
 }
 
@@ -471,7 +474,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 		"BreathRate": make(TimeSeriesData, 0),
 		"Recovery":   make(TimeSeriesData, 0),
 		"Stress":     make(TimeSeriesData, 0),
-		"Stages":     make(TimeSeriesData, 0),
+		"Stage":      make(TimeSeriesData, 0),
 		"Snoring":    make(TimeSeriesData, 0),
 	}
 
@@ -484,7 +487,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 	sessionHeartRateAverage := getVitalsAverage(requiredSessionRecords["HeartRate"], sessionSleepTime, sessionWakeupTime)
 	sessionBreathRateAverage := getVitalsAverage(requiredSessionRecords["BreathRate"], sessionSleepTime, sessionWakeupTime)
 	sessionStressAverage := getVitalsAverage(requiredSessionRecords["Stress"], sessionSleepTime, sessionWakeupTime)
-	sessionSleepDuration := getTotalDurationFromStages(requiredSessionRecords["Stages"])
+	sessionSleepDuration := getTotalDurationFromStages(requiredSessionRecords["Stage"])
 
 	var sessionSessionData SessionSleep
 	sessionSessionData.RecoveryValue = sessionRecovery
@@ -505,7 +508,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 	sessionSessionData.HeartRates = requiredSessionRecords["HeartRate"]
 	sessionSessionData.BreathRates = requiredSessionRecords["BreathRate"]
 	sessionSessionData.Recovery = requiredSessionRecords["Recovery"]
-	sessionSessionData.Stages = requiredSessionRecords["Stages"]
+	sessionSessionData.Stages = requiredSessionRecords["Stage"]
 	sessionSessionData.Stress = requiredSessionRecords["Stress"]
 
 	json.NewEncoder(w).Encode(sessionSessionData)
@@ -653,7 +656,7 @@ func GetSessionPropertyFunc(w http.ResponseWriter, r *http.Request) {
 	os.Setenv("FILE_STORE", "fluentd")
 	os.Setenv("LOG_LEVEL", "DEBUG")
 	logger.InitLogger("sens.lambda.GetSessionPropertyFunc")
-	logger.Debug(r)
+
 	sessionId, from, to, property, err := validateAndFetchQueryParameters(w, r)
 
 	if err != nil {
@@ -725,7 +728,7 @@ func GetCategoryWiseAdvancedSessionData(w http.ResponseWriter, r *http.Request) 
 			"Stress": make(TimeSeriesData, 0),
 		},
 		"Sleep": map[string]TimeSeriesData{
-			"Stages": make(TimeSeriesData, 0),
+			"Stage": make(TimeSeriesData, 0),
 		},
 		"Heart": map[string]TimeSeriesData{
 			"JjPeaks":   make(TimeSeriesData, 0),
