@@ -59,17 +59,18 @@ type SessionEvent struct {
 type SessionEvents []SessionEvent
 
 type SessionSleep struct {
-	Duration      int64
-	RecoveryValue int64
-	SleepTime     int64
-	WakeupTime    int64
-	Score         int64
-	HeartRates    TimeSeriesData
-	BreathRates   TimeSeriesData
-	Recovery      TimeSeriesData
-	Stress        TimeSeriesData
-	Stages        TimeSeriesData
-	AverageVitals struct {
+	Duration            int64
+	RecoveryValue       int64
+	RecommendedRecovery int64
+	SleepTime           int64
+	WakeupTime          int64
+	Score               int64
+	HeartRates          TimeSeriesData
+	BreathRates         TimeSeriesData
+	Recovery            TimeSeriesData
+	Stress              TimeSeriesData
+	Stages              TimeSeriesData
+	AverageVitals       struct {
 		HeartRate  int64
 		BreathRate int64
 		Stress     int64
@@ -456,15 +457,16 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 	sessionEndTime := sessionData.EndedAt
 
 	requiredSessionProperties := map[string]int64{
-		"Recovery":           0,
-		"Score":              0,
-		"SleepTime":          0,
-		"WakeupTime":         0,
-		"Duration":           0,
-		"SleepQualityPoints": 0,
-		"SleepRoutinePoints": 0,
-		"VitalsPoints":       0,
-		"RestfulnessPoints":  0,
+		"Recovery":            0,
+		"Score":               0,
+		"SleepTime":           0,
+		"WakeupTime":          0,
+		"Duration":            0,
+		"SleepQualityPoints":  0,
+		"SleepRoutinePoints":  0,
+		"VitalsPoints":        0,
+		"RestfulnessPoints":   0,
+		"RecommendedRecovery": 0,
 	}
 
 	requiredSessionProperties = fetchSessionProperties(sessionId, requiredSessionProperties)
@@ -484,6 +486,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 	sessionWakeupTime := requiredSessionProperties["WakeupTime"]
 	sessionScore := requiredSessionProperties["Score"]
 	sessionRecovery := requiredSessionProperties["Recovery"]
+	sessionRecommendedRecovery := requiredSessionProperties["RecommendedRecovery"]
 	sessionHeartRateAverage := getVitalsAverage(requiredSessionRecords["HeartRate"], sessionSleepTime, sessionWakeupTime)
 	sessionBreathRateAverage := getVitalsAverage(requiredSessionRecords["BreathRate"], sessionSleepTime, sessionWakeupTime)
 	sessionStressAverage := getVitalsAverage(requiredSessionRecords["Stress"], sessionSleepTime, sessionWakeupTime)
@@ -491,6 +494,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) {
 
 	var sessionSessionData SessionSleep
 	sessionSessionData.RecoveryValue = sessionRecovery
+	sessionSessionData.RecommendedRecovery = sessionRecommendedRecovery
 	sessionSessionData.Score = sessionScore
 	sessionSessionData.SleepTime = sessionSleepTime
 	sessionSessionData.WakeupTime = sessionWakeupTime
