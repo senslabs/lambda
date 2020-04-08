@@ -21,9 +21,9 @@ import (
 )
 
 type Session struct {
-	Id        string `json:"Id"`
+	Id        string `json:"SessionId"`
 	UserId    string `json:"UserId"`
-	Name      string `json:"Name"`
+	Name      string `json:"SessionName"`
 	Type      string `json:"Type"`
 	StartedAt int64  `json:"StartedAt"`
 	EndedAt   int64  `json:"EndedAt"`
@@ -33,15 +33,15 @@ type Sessions []Session
 
 type SessionProperty struct {
 	SessionId string `json:"SessionId"`
-	Name      string `json:"name"`
-	Value     string `json:"value"`
+	Key       string `json:"Key"`
+	Value     string `json:"Value"`
 }
 
 type SessionProperties []SessionProperty
 
 type SessionRecord struct {
 	UserId    string  `json:"UserId"`
-	Name      string  `json:"Name"`
+	Key       string  `json:"Key"`
 	Timestamp int64   `json:"Timestamp"`
 	Value     float64 `json:"Value"`
 }
@@ -51,7 +51,7 @@ type SessionRecords []SessionRecord
 type SessionEvent struct {
 	Id        string `json:"Id"`
 	UserId    string `json:"UserId"`
-	Name      string `json:"Name"`
+	Key       string `json:"Key"`
 	StartTime int64  `json:"StartTime"`
 	EndTime   int64  `json:"EndTime"`
 }
@@ -131,7 +131,7 @@ type SessionsSummary struct {
 func fetchSessionProperties(sessionId string, requiredSessionProperties map[string]int64) map[string]int64 {
 	// Fetching session properties
 	for key := range requiredSessionProperties {
-		sessionPropertiesUrl := fmt.Sprintf("%v/api/session-properties/find?and=SessionId^%v&and=Name^%v&limit=1", config.GetDatastoreUrl(), sessionId, key)
+		sessionPropertiesUrl := fmt.Sprintf("%v/api/session-properties/find?and=SessionId^%v&and=Key^%v&limit=1", config.GetDatastoreUrl(), sessionId, key)
 		sessionPropertiesResponseData := getFromDataStore(sessionPropertiesUrl)
 
 		var sessionPropertiesData SessionProperties
@@ -160,7 +160,7 @@ func fetchSessionProperties(sessionId string, requiredSessionProperties map[stri
 func fetchSessionRecords(sessionUserId string, sessionStartTime int64, sessionEndTime int64, requiredSessionRecords *map[string]TimeSeriesData) {
 	// Fetch records
 	for key := range *requiredSessionRecords {
-		sessionRecordsUrl := fmt.Sprintf("%v/api/session-records/find?and=Name^%v&and=UserId^%v&span=Timestamp^%v^%v&limit=10000000", config.GetDatastoreUrl(), key, sessionUserId, sessionStartTime, sessionEndTime)
+		sessionRecordsUrl := fmt.Sprintf("%v/api/session-records/find?and=Key^%v&and=UserId^%v&span=Timestamp^%v^%v&limit=10000000", config.GetDatastoreUrl(), key, sessionUserId, sessionStartTime, sessionEndTime)
 		sessionRecordsReponseData := getFromDataStore(sessionRecordsUrl)
 		var sessionRecordsData SessionRecords
 		json.Unmarshal(sessionRecordsReponseData, &sessionRecordsData)
