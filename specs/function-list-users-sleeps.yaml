@@ -1,0 +1,54 @@
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-QJkb
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: list-users-sleeps-9810c0c2-9a78-4690-8250-566fca44d875
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-QJkb
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-04-12T21:56:49Z"
+
+---
+apiVersion: fission.io/v1
+kind: Function
+metadata:
+  creationTimestamp: null
+  name: list-users-sleeps
+  namespace: default
+spec:
+  InvokeStrategy:
+    ExecutionStrategy:
+      ExecutorType: poolmgr
+      MaxScale: 0
+      MinScale: 0
+      SpecializationTimeout: 120
+      TargetCPUPercent: 0
+    StrategyType: execution
+  configmaps: null
+  environment:
+    name: go
+    namespace: default
+  functionTimeout: 60
+  package:
+    functionName: ListUserSleeps
+    packageref:
+      name: list-users-sleeps-9810c0c2-9a78-4690-8250-566fca44d875
+      namespace: default
+  resources: {}
+  secrets: null

@@ -1,0 +1,20 @@
+apiVersion: fission.io/v1
+kind: HTTPTrigger
+metadata:
+  creationTimestamp: null
+  name: add-op
+  namespace: default
+spec:
+  createingress: false
+  functionref:
+    functionweights: null
+    name: add-op
+    type: name
+  host: ""
+  ingressconfig:
+    annotations: null
+    host: '*'
+    path: /api/ops/add
+    tls: ""
+  method: POST
+  relativeurl: /api/ops/add

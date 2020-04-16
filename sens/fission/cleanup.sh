@@ -21,3 +21,4 @@ do
   fi
   fission route delete --name $f --verbosity=2
 done
+

@@ -1,0 +1,20 @@
+apiVersion: fission.io/v1
+kind: HTTPTrigger
+metadata:
+  creationTimestamp: null
+  name: create-device
+  namespace: default
+spec:
+  createingress: false
+  functionref:
+    functionweights: null
+    name: create-device
+    type: name
+  host: ""
+  ingressconfig:
+    annotations: null
+    host: '*'
+    path: /api/devices/create
+    tls: ""
+  method: POST
+  relativeurl: /api/devices/create
