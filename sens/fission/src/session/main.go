@@ -24,7 +24,7 @@ type Session struct {
 	Id        string `json:"SessionId"`
 	UserId    string `json:"UserId"`
 	Name      string `json:"SessionName"`
-	Type      string `json:"Type"`
+	Type      string `json:"SessionType"`
 	StartedAt int64  `json:"StartedAt"`
 	EndedAt   int64  `json:"EndedAt"`
 }
@@ -202,7 +202,7 @@ func getUserSessions(r *http.Request, sessionType string, limit int64, userId *s
 
 	for _, currentUserId := range userIdList {
 		var url string
-		url = fmt.Sprintf("%v/api/sessions/find?and=UserId^%v&limit=%v&and=Type^%v&column=EndedAt", config.GetDatastoreUrl(), currentUserId, limit, sessionType)
+		url = fmt.Sprintf("%v/api/sessions/find?and=UserId^%v&limit=%v&and=SessionType^%v&column=EndedAt", config.GetDatastoreUrl(), currentUserId, limit, sessionType)
 		if from != 0 && to != 0 {
 			url = fmt.Sprintf("%v&span=EndedAt^%v^%v", url, from, to)
 		}
