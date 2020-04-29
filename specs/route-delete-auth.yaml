@@ -1,0 +1,20 @@
+apiVersion: fission.io/v1
+kind: HTTPTrigger
+metadata:
+  creationTimestamp: null
+  name: delete-auth
+  namespace: default
+spec:
+  createingress: false
+  functionref:
+    functionweights: null
+    name: delete-auth
+    type: name
+  host: ""
+  ingressconfig:
+    annotations: null
+    host: '*'
+    path: /api/auths/delete
+    tls: ""
+  method: POST
+  relativeurl: /api/auths/delete

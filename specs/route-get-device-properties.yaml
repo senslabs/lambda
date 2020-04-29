@@ -1,0 +1,20 @@
+apiVersion: fission.io/v1
+kind: HTTPTrigger
+metadata:
+  creationTimestamp: null
+  name: get-device-properties
+  namespace: default
+spec:
+  createingress: false
+  functionref:
+    functionweights: null
+    name: get-device-properties
+    type: name
+  host: ""
+  ingressconfig:
+    annotations: null
+    host: '*'
+    path: /api/devices/{id}/properties/get
+    tls: ""
+  method: GET
+  relativeurl: /api/devices/{id}/properties/get

@@ -15,7 +15,7 @@ import (
 )
 
 func getDetail(w http.ResponseWriter, r *http.Request, category string, Id string) {
-	url := fmt.Sprintf("%s/api/%s-detail-views/find", GetDatastoreUrl(), category)
+	url := fmt.Sprintf("%s/api/%s-views/find", GetDatastoreUrl(), category)
 	or := httpclient.HttpParams{"or": {"Id^" + Id}, "limit": {"1"}}
 	var sub []map[string]interface{}
 	code, err := httpclient.Get(url, or, nil, &sub)
@@ -347,6 +347,19 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	} else {
 		m["OrgId"] = sub["OrgId"]
 		createUser(w, r, m, authId, true)
+	}
+}
+
+func DeleteAuth(w http.ResponseWriter, r *http.Request) {
+	if sub, err := getAuthSubject(r); err != nil {
+		httpclient.WriteUnauthorizedError(w, err)
+	} else {
+		authId := sub["AuthId"].(string)
+		url := fmt.Sprintf("%s/api/ext/auths/%s/delete", GetDatastoreUrl(), authId)
+		code, data, err := httpclient.PostR(url, nil, nil, nil)
+		logger.Debug(code, data)
+		errors.Pie(err)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

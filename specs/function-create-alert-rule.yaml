@@ -1,0 +1,108 @@
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-ehQY
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: create-alert-rule-5d010862-ea45-4e32-9528-420104ca02b7
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-ehQY
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-04-28T11:48:44Z"
+
+---
+apiVersion: fission.io/v1
+kind: Function
+metadata:
+  creationTimestamp: null
+  name: create-alert-rule
+  namespace: default
+spec:
+  InvokeStrategy:
+    ExecutionStrategy:
+      ExecutorType: poolmgr
+      MaxScale: 0
+      MinScale: 0
+      SpecializationTimeout: 120
+      TargetCPUPercent: 0
+    StrategyType: execution
+  configmaps: null
+  environment:
+    name: go
+    namespace: default
+  functionTimeout: 60
+  package:
+    functionName: CreateAlertRule
+    packageref:
+      name: create-alert-rule-5d010862-ea45-4e32-9528-420104ca02b7
+      namespace: default
+  resources: {}
+  secrets: null
+
+---
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-VUkj
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: create-alert-rule-59d55607-220f-4dee-973b-e4191c01dae6
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-VUkj
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-04-28T12:13:14Z"
+
+---
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-M8GH
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: create-alert-rule-644bebac-229e-4e6e-8b8b-286d3c9d6ccc
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-M8GH
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-04-28T12:23:36Z"

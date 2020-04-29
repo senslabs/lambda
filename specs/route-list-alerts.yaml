@@ -16,5 +16,5 @@ spec:
     host: '*'
     path: /api/alerts/list
     tls: ""
-  method: POST
+  method: GET
   relativeurl: /api/alerts/list

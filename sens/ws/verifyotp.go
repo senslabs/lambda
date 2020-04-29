@@ -87,7 +87,7 @@ func buildToken(w http.ResponseWriter, r *http.Request, reqBody VerifyRequestBod
 	} else if len(subs) == 0 {
 		generateTemporaryToken(w, r, reqBody) //return
 	} else {
-		url := fmt.Sprintf("%s/api/%s-detail-views/find", GetDatastoreUrl(), category)
+		url := fmt.Sprintf("%s/api/%s-views/find", GetDatastoreUrl(), category)
 		or := httpclient.HttpParams{"or": {"AuthId^" + subs[0]["AuthId"].(string)}, "limit": {"1"}}
 		code, data, err := httpclient.GetR(url, or, nil)
 		logger.Debugf("%d, %s", code, data)
@@ -132,7 +132,7 @@ func VerifyOtp(w http.ResponseWriter, r *http.Request) {
 			httpclient.WriteError(w, http.StatusInternalServerError, err)
 		} else if code != http.StatusOK || twilioResponse.Status != "approved" {
 			logger.Error("Twilio confrmation code entered does not seem to be correct, ", code, ", ", twilioResponse.Status)
-			httpclient.WriteError(w, code, err)
+			httpclient.WriteError(w, http.StatusUnauthorized, err)
 		} else { //BUILD AUTH
 			buildToken(w, r, reqBody)
 		}

@@ -9,6 +9,9 @@ fission route create --spec --method POST --url /api/otp/verify --function verif
 fission function create --spec --name verify-auth --env go --src "sens/ws/*" --entrypoint VerifyAuth
 fission route create --spec --method POST --url /api/auth/verify --function verify-auth --name verify-auth
 
+fission function create --spec --name delete-auth --env go --src "sens/ws/*" --entrypoint DeleteAuth
+fission route create --spec --method POST --url /api/auths/delete --function delete-auth --name delete-auth
+
 fission function create --spec --name add-org --env go --src "sens/ws/*" --entrypoint AddOrg
 fission route create --spec --method POST --url /api/orgs/add --function add-org --name add-org
 
@@ -67,7 +70,10 @@ fission function create --spec --name get-meditations-summary --env go --src "se
 fission route create --spec --method GET --url /api/meditations/summary/get --function get-meditations-summary --name get-meditations-summary
 
 fission function create --spec --name list-alerts --env go --src "sens/ws/*" --entrypoint ListAlerts
-fission route create --spec --method POST --url /api/alerts/list --function list-alerts --name list-alerts
+fission route create --spec --method GET --url /api/alerts/list --function list-alerts --name list-alerts
+
+fission function create --spec --name list-latest-alerts --env go --src "sens/ws/*" --entrypoint ListLatestAlerts
+fission route create --spec --method GET --url /api/alerts/latest/list --function list-latest-alerts --name list-latest-alerts
 
 fission function create --spec --name create-api-key --env go --src "sens/ws/*" --entrypoint CreateKey
 fission route create --spec --method POST --url /api/keys/create --function create-api-key --name create-api-key
@@ -92,4 +98,52 @@ fission route create --spec --method POST --url /api/devices/unpair --function u
 
 fission function create --spec --name get-session --env go --src "sens/ws/*" --entrypoint GetSession
 fission route create --spec --method POST --url /api/sessions/{sessionId}/get --function get-session --name get-session
+
+fission function create --spec --name get-quarter-activity-counts --env go --src "sens/ws/*" --entrypoint GetQuarterActivityCounts
+fission route create --spec --method GET --url /api/org/quarter-activities/counts --function get-quarter-activity-counts --name get-quarter-activity-counts
+
+fission function create --spec --name get-user-session --env go --src "sens/ws/*" --entrypoint GetUserSession
+fission route create --spec --method GET --url /api/sessions/{id}/get --function get-user-session --name get-user-session
+
+fission function create --spec --name get-user-session-events --env go --src "sens/ws/*" --entrypoint GetUserSessionEvents
+fission route create --spec --method GET --url /api/sessions/{id}/events/get --function get-user-session-events --name get-user-session-events
+
+fission function create --spec --name add-device-properties --env go --src "sens/ws/*" --entrypoint AddDeviceProperties
+fission route create --spec --method POST --url /api/devices/properties/add --function add-device-properties --name add-device-properties
+
+fission function create --spec --name get-device-properties --env go --src "sens/ws/*" --entrypoint GetDeviceProperties
+fission route create --spec --method GET --url /api/devices/{id}/properties/get --function get-device-properties --name get-device-properties
+
+fission function create --spec --name create-alert-rule --env go --src "sens/ws/*" --entrypoint CreateAlertRule
+fission route create --spec --method POST --url /api/alert-rules/create --function create-alert-rule --name create-alert-rule
+
+fission function create --spec --name create-alert-escalation --env go --src "sens/ws/*" --entrypoint CreateAlertEscalation
+fission route create --spec --method POST --url /api/alert-escalations/create --function create-alert-escalation --name create-alert-escalation
+
+fission function create --spec --name update-alert-rule --env go --src "sens/ws/*" --entrypoint UpdateAlertRule
+fission route create --spec --method POST --url /api/alert-rules/{id}/update --function update-alert-rule --name update-alert-rule
+
+fission function create --spec --name update-alert-escalation --env go --src "sens/ws/*" --entrypoint UpdateAlertEscalation
+fission route create --spec --method POST --url /api/alert-escalations/{id}/update --function update-alert-escalation --name update-alert-escalation
+
+fission function create --spec --name update-alert --env go --src "sens/ws/*" --entrypoint UpdateAlert
+fission route create --spec --method POST --url /api/alerts/{id}/update --function update-alert --name update-alert
+
+fission function create --spec --name update-org-properties --env go --src "sens/ws/*" --entrypoint UpdateOrgProperties
+fission route create --spec --method POST --url /api/orgs/properties/update --function update-org-properties --name update-org-properties
+
+fission function create --spec --name update-op-properties --env go --src "sens/ws/*" --entrypoint UpdateOpProperties
+fission route create --spec --method POST --url /api/ops/properties/update --function update-op-properties --name update-op-properties
+
+fission function create --spec --name update-user-properties --env go --src "sens/ws/*" --entrypoint UpdateUserProperties
+fission route create --spec --method POST --url /api/users/{id}/properties/update --function update-user-properties --name update-user-properties
+
+fission function create --spec --name list-org-properties --env go --src "sens/ws/*" --entrypoint ListUserProperties
+fission route create --spec --method POST --url /api/orgs/{id}/properties/list --function list-org-properties --name list-org-properties
+
+fission function create --spec --name list-org-properties --env go --src "sens/ws/*" --entrypoint ListOrgProperties
+fission route create --spec --method POST --url /api/orgs/{id}/properties/list --function list-org-properties --name list-org-properties
+
+fission function create --spec --name list-user-properties --env go --src "sens/ws/*" --entrypoint ListOpProperties
+fission route create --spec --method POST --url /api/users/{id}/properties/list --function list-user-properties --name list-user-properties
 

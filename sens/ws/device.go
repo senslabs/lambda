@@ -14,7 +14,7 @@ import (
 
 type Device struct {
 	DeviceId   string      `json:",omitempty"`
-	Name       string      `json:",omitempty"`
+	DeviceName string      `json:",omitempty"`
 	OrgId      string      `json:",omitempty"`
 	UserId     string      `json:",omitempty"`
 	CreatedAt  int64       `json:",omitempty"`
@@ -33,6 +33,10 @@ func duplicateDevice(w http.ResponseWriter, r *http.Request, orgId string, userI
 	code, err := httpclient.Get(url, and, nil, &devices)
 	if len(devices) == 0 {
 		return httpclient.WriteError(w, http.StatusBadRequest, errors.New(errors.DB_ERROR, "No devices found"))
+	} else if status == devices[0].Status {
+		return httpclient.WriteUnauthorizedError(w, errors.New(errors.DB_ERROR, "Wrong status"))
+	} else if status != REGISTERED && devices[0].OrgId != orgId {
+		return httpclient.WriteUnauthorizedError(w, errors.New(errors.DB_ERROR, "Wrong organization"))
 	} else {
 		device := devices[0]
 		logger.Debugf("%d, %#v", code, device)
@@ -67,14 +71,19 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 	os.Setenv("LOG_STORE", "fluentd")
 	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
 	logger.InitLogger("wsproxy.CreateDevice")
-	url := fmt.Sprintf("%s%s", GetDatastoreUrl(), "/api/devices/create")
-	code, data, err := httpclient.PostR(url, nil, nil, r.Body)
-	logger.Debug(code, string(data))
-	if err != nil {
-		logger.Error(err)
-		httpclient.WriteError(w, code, err)
+	if isSens, err := IsSens(w, r); err == nil && isSens {
+		url := fmt.Sprintf("%s%s", GetDatastoreUrl(), "/api/devices/create")
+		code, data, err := httpclient.PostR(url, nil, nil, r.Body)
+		defer r.Body.Close()
+		logger.Debug(code, string(data))
+		if err != nil {
+			logger.Error(err)
+			httpclient.WriteError(w, code, err)
+		} else {
+			fmt.Fprintln(w, string(data))
+		}
 	} else {
-		fmt.Fprintln(w, string(data))
+		w.WriteHeader(http.StatusUnauthorized)
 	}
 }
 
@@ -96,11 +105,20 @@ func RegisterDevice(w http.ResponseWriter, r *http.Request) {
 	os.Setenv("LOG_STORE", "fluentd")
 	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
 	logger.InitLogger("wsproxy.RegisterDevice")
-	if sub, err := getAuthSubject(r); err != nil {
+	var body DeviceUpdateBody
+	if _, err := getAuthSubject(r); err != nil {
 		logger.Error(err)
 		httpclient.WriteUnauthorizedError(w, err)
+	} else if isSens, err := IsSens(w, r); err == nil && isSens {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			defer r.Body.Close()
+			logger.Error(err)
+			httpclient.WriteInternalServerError(w, err)
+		} else {
+			duplicateDevice(w, r, body.OrgId, "", REGISTERED)
+		}
 	} else {
-		duplicateDevice(w, r, sub["OrgId"].(string), "", REGISTERED)
+		w.WriteHeader(http.StatusUnauthorized)
 	}
 }
 
@@ -109,7 +127,12 @@ func UnregisterDevice(w http.ResponseWriter, r *http.Request) {
 	os.Setenv("LOG_STORE", "fluentd")
 	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
 	logger.InitLogger("wsproxy.UnregisterDevice")
-	duplicateDevice(w, r, "", "", UNREGISTERED)
+	if sub, err := getAuthSubject(r); err != nil {
+		logger.Error(err)
+		httpclient.WriteUnauthorizedError(w, err)
+	} else {
+		duplicateDevice(w, r, "", sub["OrgId"].(string), UNREGISTERED)
+	}
 }
 
 func PairDevice(w http.ResponseWriter, r *http.Request) {
@@ -119,9 +142,13 @@ func PairDevice(w http.ResponseWriter, r *http.Request) {
 	logger.InitLogger("wsproxy.PairDevice")
 	var body DeviceUpdateBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		defer r.Body.Close()
 		httpclient.WriteError(w, http.StatusInternalServerError, err)
+	} else if sub, err := getAuthSubject(r); err != nil {
+		logger.Error(err)
+		httpclient.WriteUnauthorizedError(w, err)
 	} else {
-		duplicateDevice(w, r, "", body.UserId, PAIRED)
+		duplicateDevice(w, r, sub["OrgId"].(string), body.UserId, PAIRED)
 	}
 }
 
@@ -130,7 +157,12 @@ func UnpairDevice(w http.ResponseWriter, r *http.Request) {
 	os.Setenv("LOG_STORE", "fluentd")
 	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
 	logger.InitLogger("wsproxy.UnpairDevice")
-	duplicateDevice(w, r, "", "", UNPAIRED)
+	if sub, err := getAuthSubject(r); err != nil {
+		logger.Error(err)
+		httpclient.WriteUnauthorizedError(w, err)
+	} else {
+		duplicateDevice(w, r, "", sub["OrgId"].(string), UNPAIRED)
+	}
 }
 
 func ListDevices(w http.ResponseWriter, r *http.Request) {
@@ -151,5 +183,49 @@ func ListDevices(w http.ResponseWriter, r *http.Request) {
 		} else {
 			fmt.Fprintf(w, "%s", data)
 		}
+	}
+}
+
+// devices/properties/add
+func AddDeviceProperties(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	logger.InitLogger("wsproxy.AddDeviceProperties")
+	if isSens, err := IsSens(w, r); err == nil && isSens {
+		url := fmt.Sprintf("%s%s", GetDatastoreUrl(), "/api/device-properties/batch/create")
+		code, data, err := httpclient.PostR(url, nil, nil, r.Body)
+		defer r.Body.Close()
+		logger.Debug(code, string(data))
+		if err != nil {
+			logger.Error(err)
+			httpclient.WriteError(w, code, err)
+		} else {
+			fmt.Fprintln(w, string(data))
+		}
+	} else {
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+}
+
+// devices/{id}/properties/get
+func GetDeviceProperties(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	logger.InitLogger("wsproxy.GetDeviceProperties")
+	if isSens, err := IsSens(w, r); err == nil && isSens {
+		id := r.Header.Get("X-Fission-Params-Id")
+		url := fmt.Sprintf("%s%s", GetDatastoreUrl(), "/api/device-properties/find")
+		code, data, err := httpclient.GetR(url, nil, httpclient.HttpParams{"DeviceId": {id}, "limit": {"null"}})
+		logger.Debug(code, string(data))
+		if err != nil {
+			logger.Error(err)
+			httpclient.WriteError(w, code, err)
+		} else {
+			fmt.Fprintln(w, string(data))
+		}
+	} else {
+		w.WriteHeader(http.StatusUnauthorized)
 	}
 }

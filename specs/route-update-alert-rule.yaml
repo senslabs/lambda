@@ -1,0 +1,20 @@
+apiVersion: fission.io/v1
+kind: HTTPTrigger
+metadata:
+  creationTimestamp: null
+  name: update-alert-rule
+  namespace: default
+spec:
+  createingress: false
+  functionref:
+    functionweights: null
+    name: update-alert-rule
+    type: name
+  host: ""
+  ingressconfig:
+    annotations: null
+    host: '*'
+    path: /api/alert-rules/{id}/update
+    tls: ""
+  method: POST
+  relativeurl: /api/alert-rules/{id}/update
