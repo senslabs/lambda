@@ -1,0 +1,108 @@
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-nWD5
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: list-op-properties-d9401dc1-6413-4e53-9100-a66e1ce21410
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-nWD5
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-04-29T05:10:39Z"
+
+---
+apiVersion: fission.io/v1
+kind: Function
+metadata:
+  creationTimestamp: null
+  name: list-op-properties
+  namespace: default
+spec:
+  InvokeStrategy:
+    ExecutionStrategy:
+      ExecutorType: poolmgr
+      MaxScale: 0
+      MinScale: 0
+      SpecializationTimeout: 120
+      TargetCPUPercent: 0
+    StrategyType: execution
+  configmaps: null
+  environment:
+    name: go
+    namespace: default
+  functionTimeout: 60
+  package:
+    functionName: ListOpProperties
+    packageref:
+      name: list-op-properties-d9401dc1-6413-4e53-9100-a66e1ce21410
+      namespace: default
+  resources: {}
+  secrets: null
+
+---
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-PFME
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: list-op-properties-40d988d7-e504-4d17-bd06-75c181d66278
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-PFME
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-04-29T13:19:26Z"
+
+---
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-EvjP
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: list-op-properties-96b50b64-3e70-4b03-95f6-b79bc8ffdf8d
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-EvjP
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-04-29T13:22:18Z"

@@ -466,17 +466,19 @@ func ListOpProperties(w http.ResponseWriter, r *http.Request) {
 		httpclient.WriteInternalServerError(w, err)
 	} else {
 		opId := r.Header.Get("X-Fission-Params-Id")
-		params := httpclient.HttpParams{"and": {"OpId^" + opId}}
+		params := httpclient.HttpParams{"and": {"OpId^" + opId}, "limit": {"null"}}
 		url := fmt.Sprintf("%s/api/op-properties/find", GetDatastoreUrl())
 
-		var properties []Property
-		code, err := httpclient.Get(url, params, nil, &properties)
-		logger.Debugf("%d, %#v", code, properties)
+		code, data, err := httpclient.GetR(url, params, nil)
+		logger.Debugf("ListOpProperties => %d, %s", code, data)
 		errors.Pie(err)
 
+		properties := types.UnmarshalMaps(data)
 		response := map[string]interface{}{}
 		for _, p := range properties {
-			response[p.Key] = p.Value
+			for k, v := range p {
+				response[k] = v
+			}
 		}
 		types.MarshalInto(response, w)
 	}

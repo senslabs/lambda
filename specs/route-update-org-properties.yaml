@@ -1,0 +1,20 @@
+apiVersion: fission.io/v1
+kind: HTTPTrigger
+metadata:
+  creationTimestamp: null
+  name: update-org-properties
+  namespace: default
+spec:
+  createingress: false
+  functionref:
+    functionweights: null
+    name: update-org-properties
+    type: name
+  host: ""
+  ingressconfig:
+    annotations: null
+    host: '*'
+    path: /api/orgs/properties/update
+    tls: ""
+  method: POST
+  relativeurl: /api/orgs/properties/update

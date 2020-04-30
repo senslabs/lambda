@@ -138,12 +138,12 @@ fission route create --spec --method POST --url /api/ops/properties/update --fun
 fission function create --spec --name update-user-properties --env go --src "sens/ws/*" --entrypoint UpdateUserProperties
 fission route create --spec --method POST --url /api/users/{id}/properties/update --function update-user-properties --name update-user-properties
 
-fission function create --spec --name list-org-properties --env go --src "sens/ws/*" --entrypoint ListUserProperties
-fission route create --spec --method POST --url /api/orgs/{id}/properties/list --function list-org-properties --name list-org-properties
-
 fission function create --spec --name list-org-properties --env go --src "sens/ws/*" --entrypoint ListOrgProperties
-fission route create --spec --method POST --url /api/orgs/{id}/properties/list --function list-org-properties --name list-org-properties
+fission route create --spec --method GET --url /api/orgs/{id}/properties/list --function list-org-properties --name list-org-properties
 
-fission function create --spec --name list-user-properties --env go --src "sens/ws/*" --entrypoint ListOpProperties
-fission route create --spec --method POST --url /api/users/{id}/properties/list --function list-user-properties --name list-user-properties
+fission function create --spec --name list-op-properties --env go --src "sens/ws/*" --entrypoint ListOpProperties
+fission route create --spec --method GET --url /api/ops/{id}/properties/list --function list-op-properties --name list-op-properties
+
+fission function create --spec --name list-user-properties --env go --src "sens/ws/*" --entrypoint ListUserProperties
+fission route create --spec --method GET --url /api/users/{id}/properties/list --function list-user-properties --name list-user-properties
 

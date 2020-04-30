@@ -1,14 +1,14 @@
 include:
 - sens/ws/*
 kind: ArchiveUploadSpec
-name: sens-ws-ehQY
+name: sens-ws-rj7C
 
 ---
 apiVersion: fission.io/v1
 kind: Package
 metadata:
   creationTimestamp: null
-  name: create-alert-rule-5d010862-ea45-4e32-9528-420104ca02b7
+  name: update-op-properties-d6297e9c-eb40-4349-8506-d554ed76bd47
   namespace: default
 spec:
   deployment:
@@ -19,17 +19,17 @@ spec:
   source:
     checksum: {}
     type: url
-    url: archive://sens-ws-ehQY
+    url: archive://sens-ws-rj7C
 status:
   buildstatus: pending
-  lastUpdateTimestamp: "2020-04-28T11:48:44Z"
+  lastUpdateTimestamp: "2020-04-29T04:57:48Z"
 
 ---
 apiVersion: fission.io/v1
 kind: Function
 metadata:
   creationTimestamp: null
-  name: create-alert-rule
+  name: update-op-properties
   namespace: default
 spec:
   InvokeStrategy:
@@ -46,9 +46,9 @@ spec:
     namespace: default
   functionTimeout: 60
   package:
-    functionName: CreateAlertRule
+    functionName: UpdateOpProperties
     packageref:
-      name: create-alert-rule-5d010862-ea45-4e32-9528-420104ca02b7
+      name: update-op-properties-d6297e9c-eb40-4349-8506-d554ed76bd47
       namespace: default
   resources: {}
   secrets: null

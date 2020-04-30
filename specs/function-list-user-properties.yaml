@@ -1,14 +1,14 @@
 include:
 - sens/ws/*
 kind: ArchiveUploadSpec
-name: sens-ws-ehQY
+name: sens-ws-YXQP
 
 ---
 apiVersion: fission.io/v1
 kind: Package
 metadata:
   creationTimestamp: null
-  name: create-alert-rule-5d010862-ea45-4e32-9528-420104ca02b7
+  name: list-user-properties-637450c1-5dfb-40e2-9cb4-0dc879e01dc1
   namespace: default
 spec:
   deployment:
@@ -19,17 +19,17 @@ spec:
   source:
     checksum: {}
     type: url
-    url: archive://sens-ws-ehQY
+    url: archive://sens-ws-YXQP
 status:
   buildstatus: pending
-  lastUpdateTimestamp: "2020-04-28T11:48:44Z"
+  lastUpdateTimestamp: "2020-04-29T04:58:15Z"
 
 ---
 apiVersion: fission.io/v1
 kind: Function
 metadata:
   creationTimestamp: null
-  name: create-alert-rule
+  name: list-user-properties
   namespace: default
 spec:
   InvokeStrategy:
@@ -46,9 +46,9 @@ spec:
     namespace: default
   functionTimeout: 60
   package:
-    functionName: CreateAlertRule
+    functionName: ListUserProperties
     packageref:
-      name: create-alert-rule-5d010862-ea45-4e32-9528-420104ca02b7
+      name: list-user-properties-637450c1-5dfb-40e2-9cb4-0dc879e01dc1
       namespace: default
   resources: {}
   secrets: null
