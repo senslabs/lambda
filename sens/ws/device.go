@@ -161,7 +161,7 @@ func UnpairDevice(w http.ResponseWriter, r *http.Request) {
 		logger.Error(err)
 		httpclient.WriteUnauthorizedError(w, err)
 	} else {
-		duplicateDevice(w, r, "", sub["OrgId"].(string), UNPAIRED)
+		duplicateDevice(w, r, sub["OrgId"].(string), "", UNPAIRED)
 	}
 }
 

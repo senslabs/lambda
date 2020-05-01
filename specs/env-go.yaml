@@ -7,7 +7,7 @@ metadata:
 spec:
   builder:
     command: build
-    image: dozeelabs/fission-go-builder
+    image: fission/go-builder-1.13
   imagepullsecret: ""
   keeparchive: false
   poolsize: 3
@@ -19,5 +19,5 @@ spec:
       cpu: 40m
       memory: 64Mi
   runtime:
-    image: dozeelabs/fission-go-env
+    image: fission/go-env-1.13
   version: 2

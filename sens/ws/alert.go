@@ -9,6 +9,7 @@ import (
 	"github.com/senslabs/alpha/sens/logger"
 )
 
+//gcloud functions deploy NAME --source https://source.developers.google.com/projects/PROJECT_ID/repos/REPOSITORY_ID/moveable-aliases/master/paths/SOURCE --runtime RUNTIME TRIGGER... [FLAGS...]
 //This is same a ListAlerts
 func ListUserAlerts(w http.ResponseWriter, r *http.Request) {
 	os.Setenv("LOG_LEVEL", "DEBUG")

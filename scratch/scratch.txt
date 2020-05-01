@@ -1,8 +1,0 @@
-FILE=https://github.com/senslabs/lambda/blob/master/sens/session/session.go
-fission function create --name get-user-sleep --env go-sens --src $FILE --entrypoint GetUserSleep
-fission function create --name list-user-sleeps --env go-sens --src $FILE --entrypoint ListUserSleeps
-
-
-docker run --rm -p 8080:80 -v /code:/code wernight/codiad
-
-http://139.59.30.44:8080/

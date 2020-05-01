@@ -1,4 +1,4 @@
-fission env create --spec --name go --image dozeelabs/fission-go-env --builder dozeelabs/fission-go-builder --mincpu 40 --maxcpu 80 --minmemory 64 --maxmemory 128 --poolsize 3
+fission env create --spec --name go --image dozeelabs/fission-go-env --builder dozeelabs/fission-go-builder:20200430 --mincpu 40 --maxcpu 80 --minmemory 64 --maxmemory 128 --poolsize 3
 
 fission function create --spec --name request-otp --env go --src "sens/ws/*" --entrypoint RequestOtp
 fission route create --spec --method POST --url /api/otp/request --function request-otp --name request-otp
