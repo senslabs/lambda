@@ -167,3 +167,47 @@ func UpdateAlert(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func ListAlertRules(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	logger.InitLogger("wsproxy.ListAlertRules")
+	if _, err := getAuthSubject(r); err != nil {
+		logger.Error(err)
+		httpclient.WriteInternalServerError(w, err)
+	} else {
+		url := fmt.Sprintf("%s/api/alert-rules/create", GetDatastoreUrl())
+		code, data, err := httpclient.PostR(url, nil, nil, r.Body)
+		defer r.Body.Close()
+		logger.Debugf("%d, %s", code, data)
+		if err != nil {
+			logger.Error(err)
+			httpclient.WriteError(w, code, err)
+		} else {
+			fmt.Fprintf(w, "%s", data)
+		}
+	}
+}
+
+func ListAlertEscalations(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	logger.InitLogger("wsproxy.ListAlertEscalations")
+	if _, err := getAuthSubject(r); err != nil {
+		logger.Error(err)
+		httpclient.WriteInternalServerError(w, err)
+	} else {
+		url := fmt.Sprintf("%s/api/alert-escalations/create", GetDatastoreUrl())
+		code, data, err := httpclient.PostR(url, nil, nil, r.Body)
+		defer r.Body.Close()
+		logger.Debugf("%d, %s", code, data)
+		if err != nil {
+			logger.Error(err)
+			httpclient.WriteError(w, code, err)
+		} else {
+			fmt.Fprintf(w, "%s", data)
+		}
+	}
+}
