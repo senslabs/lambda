@@ -1,4 +1,4 @@
-package main
+package gcloudfn
 
 import (
 	"fmt"
@@ -12,9 +12,9 @@ import (
 //gcloud functions deploy NAME --source https://source.developers.google.com/projects/PROJECT_ID/repos/REPOSITORY_ID/moveable-aliases/master/paths/SOURCE --runtime RUNTIME TRIGGER... [FLAGS...]
 //This is same a ListAlerts
 func ListUserAlerts(w http.ResponseWriter, r *http.Request) {
-	os.Setenv("LOG_LEVEL", "DEBUG")
-	os.Setenv("LOG_STORE", "fluentd")
-	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	// os.Setenv("LOG_LEVEL", "DEBUG")
+	// os.Setenv("LOG_STORE", "fluentd")
+	// os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
 	logger.InitLogger("wsproxy.ListUserAlerts")
 	if sub, err := getAuthSubject(r); err != nil {
 		logger.Error(err)

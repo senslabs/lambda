@@ -1,4 +1,4 @@
-package main
+package gcloudfn
 
 import (
 	"crypto/rand"
@@ -339,8 +339,6 @@ func GetQuarterActivityCounts(w http.ResponseWriter, r *http.Request) {
 }
 
 type Property struct {
-	OrgId  string
-	OpId   string
 	UserId string
 	Key    string
 	Value  string
@@ -355,7 +353,7 @@ func UpdateUserProperties(w http.ResponseWriter, r *http.Request) {
 		userId := r.Header.Get("X-Fission-Params-Id")
 		m := types.UnmarshalMap(r.Body)
 		for k, v := range m {
-			properties = append(properties, Property{UserId: userId, Key: k, Value: v.(string)})
+			properties = append(properties, Property{userId, k, v.(string)})
 		}
 
 		url := fmt.Sprintf("%s/api/user-properties/batch/create", GetDatastoreUrl())
@@ -379,7 +377,7 @@ func UpdateOpProperties(w http.ResponseWriter, r *http.Request) {
 		opId := sub["OpId"].(string)
 		m := types.UnmarshalMap(r.Body)
 		for k, v := range m {
-			properties = append(properties, Property{OpId: opId, Key: k, Value: v.(string)})
+			properties = append(properties, Property{opId, k, v.(string)})
 		}
 
 		url := fmt.Sprintf("%s/api/op-properties/batch/create", GetDatastoreUrl())
@@ -403,7 +401,7 @@ func UpdateOrgProperties(w http.ResponseWriter, r *http.Request) {
 		orgId := sub["OrgId"].(string)
 		m := types.UnmarshalMap(r.Body)
 		for k, v := range m {
-			properties = append(properties, Property{OrgId: orgId, Key: k, Value: v.(string)})
+			properties = append(properties, Property{orgId, k, v.(string)})
 		}
 
 		url := fmt.Sprintf("%s/api/org-properties/batch/create", GetDatastoreUrl())
@@ -471,64 +469,17 @@ func ListOpProperties(w http.ResponseWriter, r *http.Request) {
 		params := httpclient.HttpParams{"and": {"OpId^" + opId}, "limit": {"null"}}
 		url := fmt.Sprintf("%s/api/op-properties/find", GetDatastoreUrl())
 
-		var properties []Property
-		code, err := httpclient.Get(url, params, nil, &properties)
-		logger.Debugf("ListOpProperties => %d, %#v", code, properties)
+		code, data, err := httpclient.GetR(url, params, nil)
+		logger.Debugf("ListOpProperties => %d, %s", code, data)
 		errors.Pie(err)
+
+		properties := types.UnmarshalMaps(data)
 		response := map[string]interface{}{}
 		for _, p := range properties {
-			response[p.Key] = p.Value
+			for k, v := range p {
+				response[k] = v
+			}
 		}
 		types.MarshalInto(response, w)
-	}
-}
-
-func GetUsersSleepCount(w http.ResponseWriter, r *http.Request) {
-	os.Setenv("LOG_LEVEL", "DEBUG")
-	os.Setenv("LOG_STORE", "fluentd")
-	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
-	logger.InitLogger("wsproxy.GetUserSleepCount")
-	if sub, err := getAuthSubject(r); err != nil {
-		logger.Error(err)
-		httpclient.WriteInternalServerError(w, err)
-	} else {
-		params := GetUserParams(w, r, sub["OrgId"].(string))
-		url := fmt.Sprintf("%s/api/user-session-count-views/find", GetDatastoreUrl())
-		code, data, err := httpclient.GetR(url, params, nil)
-		logger.Debugf("%d, %s", code, data)
-		if err != nil {
-			logger.Error(err)
-			httpclient.WriteError(w, code, err)
-		} else {
-			fmt.Fprintf(w, "%s", data)
-		}
-	}
-}
-
-func GetSessionDurations(w http.ResponseWriter, r *http.Request) {
-	os.Setenv("LOG_LEVEL", "DEBUG")
-	os.Setenv("LOG_STORE", "fluentd")
-	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
-	logger.InitLogger("wsproxy.GetSessionDurations")
-	if _, err := getAuthSubject(r); err != nil {
-		logger.Error(err)
-		httpclient.WriteInternalServerError(w, err)
-	} else {
-		sessionIds := r.URL.Query()["sessionId"]
-		sessions := "SessionId^" + strings.Join(sessionIds, "^")
-		limit := r.URL.Query().Get("limit")
-		if limit == "" {
-			limit = "null"
-		}
-		params := httpclient.HttpParams{"in": {sessions}, "limit": {limit}}
-		url := fmt.Sprintf("%s/api/session-duration-views/find", GetDatastoreUrl())
-		code, data, err := httpclient.GetR(url, params, nil)
-		logger.Debugf("%d, %s", code, data)
-		if err != nil {
-			logger.Error(err)
-			httpclient.WriteError(w, code, err)
-		} else {
-			fmt.Fprintf(w, "%s", data)
-		}
 	}
 }

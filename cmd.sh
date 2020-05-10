@@ -147,3 +147,15 @@ fission route create --spec --method GET --url /api/ops/{id}/properties/list --f
 fission function create --spec --name list-user-properties --env go --src "sens/ws/*" --entrypoint ListUserProperties
 fission route create --spec --method GET --url /api/users/{id}/properties/list --function list-user-properties --name list-user-properties
 
+fission function create --spec --name list-alert-rules --env go --src "sens/ws/*" --entrypoint ListAlertRules
+fission route create --spec --method GET --url /api/alert-rules/list --function list-alert-rules --name list-alert-rules
+
+fission function create --spec --name list-alert-escalations --env go --src "sens/ws/*" --entrypoint ListAlertEscalations
+fission route create --spec --method GET --url /api/alert-escalations/list --function list-alert-escalations --name list-alert-escalations
+
+fission function create --spec --name get-users-sleep-count --env go --src "sens/ws/*" --entrypoint GetUsersSleepCount
+fission route create --spec --method GET --url /api/users/sleeps/count --function get-users-sleep-count --name get-users-sleep-count
+
+fission function create --spec --name get-session-durations --env go --src "sens/ws/*" --entrypoint GetSessionDurations
+fission route create --spec --method GET --url /api/sessions/durations/get --function get-session-durations --name get-session-durations
+

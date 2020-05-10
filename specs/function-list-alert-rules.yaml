@@ -1,0 +1,54 @@
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-2csj
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: list-alert-rules-70941122-13e5-41b7-91dd-4235edfe58f8
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-2csj
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-05-01T09:32:17Z"
+
+---
+apiVersion: fission.io/v1
+kind: Function
+metadata:
+  creationTimestamp: null
+  name: list-alert-rules
+  namespace: default
+spec:
+  InvokeStrategy:
+    ExecutionStrategy:
+      ExecutorType: poolmgr
+      MaxScale: 0
+      MinScale: 0
+      SpecializationTimeout: 120
+      TargetCPUPercent: 0
+    StrategyType: execution
+  configmaps: null
+  environment:
+    name: go
+    namespace: default
+  functionTimeout: 60
+  package:
+    functionName: ListAlertRules
+    packageref:
+      name: list-alert-rules-70941122-13e5-41b7-91dd-4235edfe58f8
+      namespace: default
+  resources: {}
+  secrets: null

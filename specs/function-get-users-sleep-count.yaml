@@ -1,0 +1,54 @@
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-xnmT
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: get-users-sleep-count-ae2434cc-dff9-4791-b906-d0ccb88b8916
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-xnmT
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-05-08T19:04:31Z"
+
+---
+apiVersion: fission.io/v1
+kind: Function
+metadata:
+  creationTimestamp: null
+  name: get-users-sleep-count
+  namespace: default
+spec:
+  InvokeStrategy:
+    ExecutionStrategy:
+      ExecutorType: poolmgr
+      MaxScale: 0
+      MinScale: 0
+      SpecializationTimeout: 120
+      TargetCPUPercent: 0
+    StrategyType: execution
+  configmaps: null
+  environment:
+    name: go
+    namespace: default
+  functionTimeout: 60
+  package:
+    functionName: GetUsersSleepCount
+    packageref:
+      name: get-users-sleep-count-ae2434cc-dff9-4791-b906-d0ccb88b8916
+      namespace: default
+  resources: {}
+  secrets: null

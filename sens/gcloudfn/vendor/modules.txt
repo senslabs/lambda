@@ -1,0 +1,23 @@
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+github.com/dgrijalva/jwt-go
+# github.com/fluent/fluent-logger-golang v1.5.0
+github.com/fluent/fluent-logger-golang/fluent
+# github.com/google/uuid v1.1.1
+github.com/google/uuid
+# github.com/hashicorp/go-cleanhttp v0.5.1
+github.com/hashicorp/go-cleanhttp
+# github.com/hashicorp/go-retryablehttp v0.6.5
+github.com/hashicorp/go-retryablehttp
+# github.com/philhofer/fwd v1.0.0
+github.com/philhofer/fwd
+# github.com/senslabs/alpha v0.0.0-20200501050720-ac0b614d8622
+github.com/senslabs/alpha/sens/errors
+github.com/senslabs/alpha/sens/httpclient
+github.com/senslabs/alpha/sens/jwt
+github.com/senslabs/alpha/sens/logger
+github.com/senslabs/alpha/sens/types
+# github.com/tinylib/msgp v1.1.2
+github.com/tinylib/msgp/msgp
+# golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79
+golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blowfish
