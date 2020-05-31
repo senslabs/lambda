@@ -1,0 +1,45 @@
+package main
+
+import (
+	"crypto/rand"
+	"encoding/json"
+	"fmt"
+	"log"
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/senslabs/alpha/sens/httpclient"
+	"golang.org/x/crypto/bcrypt"
+)
+
+func TestCreateKey(t *testing.T) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		log.Fatal(err)
+	} else {
+		body := make(map[string]string)
+		body["ApiKey"] = fmt.Sprintf("%x", b)
+		if keyId, err := uuid.NewRandom(); err != nil {
+			log.Fatal(err)
+		} else if hash, err := bcrypt.GenerateFromPassword([]byte(body["ApiKey"]), bcrypt.DefaultCost); err != nil {
+			log.Fatal(err)
+		} else {
+			body["OrgId"] = "139284a8-5a2a-4982-a92f-e58a94dde1e1"
+			body["KeyName"] = keyId.String()
+			body["Key"] = string(hash)
+			body["ApiKeyId"] = keyId.String()
+			if b, err := json.Marshal(body); err != nil {
+				log.Fatal(err)
+			} else {
+				url := fmt.Sprintf("%s/api/api-keys/create", "http://35.184.200.59")
+				code, data, err := httpclient.PostR(url, nil, nil, b)
+				log.Printf("%d, %s", code, data)
+				if err != nil {
+					log.Fatal(err)
+				} else {
+					log.Printf("%s/%s", data, body)
+				}
+			}
+		}
+	}
+}

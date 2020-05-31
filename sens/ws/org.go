@@ -124,8 +124,9 @@ func ListUserSleeps(w http.ResponseWriter, r *http.Request) {
 		httpclient.WriteInternalServerError(w, err)
 	} else {
 		params := GetUserParams(w, r, sub["OrgId"].(string))
-		params["and"] = []string{"SessionType^Sleep"}
-		url := fmt.Sprintf("%s/api/org-session-info-views/find", GetDatastoreUrl())
+		// params["and"] = []string{"SessionType^Sleep"}
+		// url := fmt.Sprintf("%s/api/org-session-info-views/find", GetDatastoreUrl())
+		url := fmt.Sprintf("%s/api/session-views/find", GetDatastoreUrl())
 		code, data, err := httpclient.GetR(url, params, nil)
 		logger.Debugf("%d, %s", code, data)
 		if err != nil {
@@ -189,12 +190,13 @@ func GetSleepsSummary(w http.ResponseWriter, r *http.Request) {
 	os.Setenv("LOG_STORE", "fluentd")
 	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
 	logger.InitLogger("wsproxy.GetSleepsSummary")
-	if sub, err := getAuthSubject(r); err != nil {
+	if _, err := getAuthSubject(r); err != nil {
 		logger.Error(err)
 		httpclient.WriteInternalServerError(w, err)
 	} else {
-		params := GetUserParams(w, r, sub["OrgId"].(string))
-		url := fmt.Sprintf("%s/api/org-sleep-views/find", GetDatastoreUrl())
+		userIds := r.URL.Query()["userId"]
+		params := httpclient.HttpParams{"UserId": userIds}
+		url := fmt.Sprintf("%s/api/ext/users/sessions/summary", GetDatastoreUrl())
 		logger.Debugf("%s, %#v", url, params)
 		code, data, err := httpclient.GetR(url, params, nil)
 		logger.Debugf("%d, %s", code, data)

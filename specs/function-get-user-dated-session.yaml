@@ -1,0 +1,54 @@
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-BeKA
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: get-user-dated-session-68c1590c-4dc5-4ef5-b2d0-174d4ea89498
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-BeKA
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-05-16T06:10:28Z"
+
+---
+apiVersion: fission.io/v1
+kind: Function
+metadata:
+  creationTimestamp: null
+  name: get-user-dated-session
+  namespace: default
+spec:
+  InvokeStrategy:
+    ExecutionStrategy:
+      ExecutorType: poolmgr
+      MaxScale: 0
+      MinScale: 0
+      SpecializationTimeout: 120
+      TargetCPUPercent: 0
+    StrategyType: execution
+  configmaps: null
+  environment:
+    name: go
+    namespace: default
+  functionTimeout: 60
+  package:
+    functionName: GetUserDatedSession
+    packageref:
+      name: get-user-dated-session-68c1590c-4dc5-4ef5-b2d0-174d4ea89498
+      namespace: default
+  resources: {}
+  secrets: null

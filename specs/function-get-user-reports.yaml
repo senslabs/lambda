@@ -1,0 +1,54 @@
+include:
+- sens/ws/*
+kind: ArchiveUploadSpec
+name: sens-ws-Yd8X
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: get-user-reports-32bf9ca2-72fa-4401-9e7e-b484567b44c8
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-Yd8X
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-05-13T07:01:24Z"
+
+---
+apiVersion: fission.io/v1
+kind: Function
+metadata:
+  creationTimestamp: null
+  name: get-user-reports
+  namespace: default
+spec:
+  InvokeStrategy:
+    ExecutionStrategy:
+      ExecutorType: poolmgr
+      MaxScale: 0
+      MinScale: 0
+      SpecializationTimeout: 120
+      TargetCPUPercent: 0
+    StrategyType: execution
+  configmaps: null
+  environment:
+    name: go
+    namespace: default
+  functionTimeout: 60
+  package:
+    functionName: GetUserReports
+    packageref:
+      name: get-user-reports-32bf9ca2-72fa-4401-9e7e-b484567b44c8
+      namespace: default
+  resources: {}
+  secrets: null

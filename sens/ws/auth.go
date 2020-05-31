@@ -354,4 +354,16 @@ func DeleteAuth(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func AuthExists(w http.ResponseWriter, r *http.Request) {
+	medium := r.URL.Query().Get("Medium")
+	mediumValue := r.URL.Query().Get("MediumValue")
+	params := httpclient.HttpParams{"limit": {"1"}, "and": {medium + "^" + mediumValue}}
+	url := fmt.Sprintf("%s/api/auths/find", GetDatastoreUrl())
+	result := []map[string]interface{}{}
+	code, err := httpclient.Get(url, params, nil, &result)
+	logger.Debugf("%d", code)
+	errors.Pie(err)
+	fmt.Fprintf(w, "%t", len(result) > 0)
+}
+
 func main() {}

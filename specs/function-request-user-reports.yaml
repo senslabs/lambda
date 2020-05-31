@@ -1,0 +1,54 @@
+include:
+- sens/ws/alert.go
+kind: ArchiveUploadSpec
+name: sens-ws-alert-go-4w7U
+
+---
+apiVersion: fission.io/v1
+kind: Package
+metadata:
+  creationTimestamp: null
+  name: request-user-reports-b71a8990-11fe-46ce-9b2e-79a0eb539fa6
+  namespace: default
+spec:
+  deployment:
+    checksum: {}
+  environment:
+    name: go
+    namespace: default
+  source:
+    checksum: {}
+    type: url
+    url: archive://sens-ws-alert-go-4w7U
+status:
+  buildstatus: pending
+  lastUpdateTimestamp: "2020-05-30T17:32:09Z"
+
+---
+apiVersion: fission.io/v1
+kind: Function
+metadata:
+  creationTimestamp: null
+  name: request-user-reports
+  namespace: default
+spec:
+  InvokeStrategy:
+    ExecutionStrategy:
+      ExecutorType: poolmgr
+      MaxScale: 0
+      MinScale: 0
+      SpecializationTimeout: 120
+      TargetCPUPercent: 0
+    StrategyType: execution
+  configmaps: null
+  environment:
+    name: go
+    namespace: default
+  functionTimeout: 60
+  package:
+    functionName: RequestUserReports
+    packageref:
+      name: request-user-reports-b71a8990-11fe-46ce-9b2e-79a0eb539fa6
+      namespace: default
+  resources: {}
+  secrets: null

@@ -88,3 +88,99 @@ func GetUserSessionEvents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func GetSleepTrend(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	logger.InitLogger("wsproxy.GetDatedSleeps")
+	if _, err := getAuthSubject(r); err != nil {
+		logger.Error(err)
+		httpclient.WriteUnauthorizedError(w, err)
+	} else {
+		id := r.Header.Get("X-Fission-Params-Id")
+		from := r.URL.Query().Get("from")
+		to := r.URL.Query().Get("to")
+		params := httpclient.HttpParams{"From": {from}, "To": {to}}
+		url := fmt.Sprintf("%s/api/ext/users/%s/trends", GetDatastoreUrl(), id)
+		code, data, err := httpclient.GetR(url, params, nil)
+		if err != nil {
+			logger.Error(err)
+			httpclient.WriteError(w, code, err)
+		} else {
+			fmt.Fprintf(w, "%s", data)
+		}
+	}
+}
+
+func GetUserDatedSession(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	logger.InitLogger("wsproxy.GetUserDateSession")
+	if _, err := getAuthSubject(r); err != nil {
+		logger.Error(err)
+		httpclient.WriteUnauthorizedError(w, err)
+	} else {
+		id := r.Header.Get("X-Fission-Params-Id")
+		from := r.URL.Query().Get("from")
+		to := r.URL.Query().Get("to")
+		params := httpclient.HttpParams{"span": {"Date^" + from + "^" + to}, "and": {"UserId^" + id}, "limit": {"null"}}
+		url := fmt.Sprintf("%s/api/user-dated-session-views/find", GetDatastoreUrl())
+		code, data, err := httpclient.GetR(url, params, nil)
+		if err != nil {
+			logger.Error(err)
+			httpclient.WriteError(w, code, err)
+		} else {
+			fmt.Fprintf(w, "%s", data)
+		}
+	}
+}
+
+func GetLongestSleepTrend(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	logger.InitLogger("wsproxy.GetLongestSleepTrend")
+	if _, err := getAuthSubject(r); err != nil {
+		logger.Error(err)
+		httpclient.WriteUnauthorizedError(w, err)
+	} else {
+		id := r.Header.Get("X-Fission-Params-Id")
+		from := r.URL.Query().Get("from")
+		to := r.URL.Query().Get("to")
+		params := httpclient.HttpParams{"span": {"Date^" + from + "^" + to}, "and": {"UserId^" + id}, "limit": {"null"}}
+		url := fmt.Sprintf("%s/api/longest-sleep-trend-views/find", GetDatastoreUrl())
+		code, data, err := httpclient.GetR(url, params, nil)
+		if err != nil {
+			logger.Error(err)
+			httpclient.WriteError(w, code, err)
+		} else {
+			fmt.Fprintf(w, "%s", data)
+		}
+	}
+}
+
+func ListUserBaselines(w http.ResponseWriter, r *http.Request) {
+	os.Setenv("LOG_LEVEL", "DEBUG")
+	os.Setenv("LOG_STORE", "fluentd")
+	os.Setenv("FLUENTD_HOST", "fluentd.senslabs.me")
+	logger.InitLogger("wsproxy.ListUserBaselines")
+	if _, err := getAuthSubject(r); err != nil {
+		logger.Error(err)
+		httpclient.WriteUnauthorizedError(w, err)
+	} else {
+		id := r.Header.Get("X-Fission-Params-Id")
+		from := r.URL.Query().Get("from")
+		to := r.URL.Query().Get("to")
+		params := httpclient.HttpParams{"span": {"CreatedAt^" + from + "^" + to}, "and": {"UserId^" + id}, "limit": {"null"}}
+		url := fmt.Sprintf("%s/api/user-baseline-views/find", GetDatastoreUrl())
+		code, data, err := httpclient.GetR(url, params, nil)
+		if err != nil {
+			logger.Error(err)
+			httpclient.WriteError(w, code, err)
+		} else {
+			fmt.Fprintf(w, "%s", data)
+		}
+	}
+}

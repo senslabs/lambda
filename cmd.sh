@@ -159,3 +159,21 @@ fission route create --spec --method GET --url /api/users/sleeps/count --functio
 fission function create --spec --name get-session-durations --env go --src "sens/ws/*" --entrypoint GetSessionDurations
 fission route create --spec --method GET --url /api/sessions/durations/get --function get-session-durations --name get-session-durations
 
+fission function create --spec --name get-user-reports --env go --src "sens/ws/*" --entrypoint GetUserReports
+fission route create --spec --method GET --url /api/users/reports/get --function get-user-reports --name get-user-reports
+
+fission function create --spec --name request-user-reports --env go --src "sens/ws/*" --entrypoint RequestUserReports
+fission route create --spec --method POST --url /api/users/{id}/report/request --function request-user-reports --name request-user-reports
+
+fission function create --spec --name get-sleep-trend --env go --src "sens/ws/*" --entrypoint GetSleepTrend
+fission route create --spec --method GET --url /api/users/{id}/sleep-trend/get --function get-sleep-trend --name get-sleep-trend
+
+fission function create --spec --name get-user-dated-session --env go --src "sens/ws/*" --entrypoint GetUserDatedSession
+fission route create --spec --method GET --url /api/users/{id}/dated-sessions/get --function get-user-dated-session --name get-user-dated-session
+
+fission function create --spec --name get-longest-sleep-trend --env go --src "sens/ws/*" --entrypoint GetLongestSleepTrend
+fission route create --spec --method GET --url /api/users/{id}/longest-trend/get --function get-longest-sleep-trend --name get-longest-sleep-trend
+
+fission function create --spec --name list-user-baselines --env go --src "sens/ws/*" --entrypoint ListUserBaselines
+fission route create --spec --method GET --url /api/users/{id}/baselines/list --function list-user-baselines --name list-user-baselines
+
