@@ -9,6 +9,7 @@ import (
 	"github.com/senslabs/alpha/sens/logger"
 )
 
+//6719791d-f055-4a15-a50b-2ee305b449e9
 //gcloud functions deploy NAME --source https://source.developers.google.com/projects/PROJECT_ID/repos/REPOSITORY_ID/moveable-aliases/master/paths/SOURCE --runtime RUNTIME TRIGGER... [FLAGS...]
 //This is same a ListAlerts
 func ListUserAlerts(w http.ResponseWriter, r *http.Request) {
